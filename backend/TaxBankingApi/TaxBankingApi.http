@@ -1,0 +1,6 @@
+@TaxBankingApi_HostAddress = http://localhost:5106
+
+GET {{TaxBankingApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
