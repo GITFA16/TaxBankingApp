@@ -7,7 +7,7 @@ namespace TaxBankingApi.Controllers; // Namespace for grouping controller classe
 [Route("api/[controller]")] // Defines the URL route. [controller] becomes "users"
 public class UsersController : ControllerBase // UsersController inherits from ControllerBase
 {
-    [HttpGet] // This method handles HTTP GET requests
+    [HttpGet] // GET /api/users ; This method handles HTTP GET requests
     public ActionResult<IEnumerable<User>> GetUsers()
     // public = accessible by ASP.NET Core
     // ActionResult<IEnumerable<User>> = HTTP response containing a collection of User objects
@@ -38,7 +38,7 @@ public class UsersController : ControllerBase // UsersController inherits from C
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}")]  //GET /api/users/{id}
     // Handles HTTP GET requests with an ID parameter
     public ActionResult<User> GetUserById(int id)
     // ActionResult<User> = HTTP response that can contain one User object
@@ -76,6 +76,22 @@ public class UsersController : ControllerBase // UsersController inherits from C
         // Returns HTTP status code 200 OK together with the User object
     }
 
+    [HttpPut("{id}")]
+    public IActionResult UpdateUser(int id, User updatedUser)
+    {
+        var user = users.FirstOrDefault(user => user.Id == id);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        user.FirstName = updatedUser.FirstName;
+        user.LastName = updatedUser.LastName;
+        user.Email = updatedUser.Email;
+
+        return Ok(user);
+    }
 
     [HttpDelete("{id}")]
     // Handles HTTP DELETE requests
@@ -119,4 +135,5 @@ public class UsersController : ControllerBase // UsersController inherits from C
         // 204 means the delete operation was successful
         // No response body is returned
     }
+
 }

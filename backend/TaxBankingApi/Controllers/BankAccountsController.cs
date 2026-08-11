@@ -16,7 +16,7 @@ public class BankAccountsController : ControllerBase
             AccountName = "Private Account",
             Iban = "CH9300762011623852957",
             Currency = "CHF",
-            Balance = 5400.50m
+            Balance = 100400.50m
         },
 
         new BankAccount
@@ -36,12 +36,12 @@ public class BankAccountsController : ControllerBase
             AccountName = "Private Account",
             Iban = "CH1200762011623852959",
             Currency = "CHF",
-            Balance = 3200.75m
+            Balance = 1200.75m
         }
     };
 
     [HttpGet]
-    public ActionResult<IEnumerable<BankAccount>> GetBankAccounts()
+    public ActionResult<IEnumerable<BankAccount>> GetBankAccounts() //<..> group of BankAccount objects
     {
         return Ok(accounts);
     }
@@ -57,5 +57,69 @@ public class BankAccountsController : ControllerBase
         }
 
         return Ok(account);
+    }
+
+    [HttpGet("/api/users/{userId}/accounts")]
+// Handles HTTP GET requests for all bank accounts belonging to a specific user
+// Example: GET /api/users/1/accounts
+
+    public ActionResult<IEnumerable<BankAccount>> GetAccountsByUser(int userId)
+    {
+        var userAccounts = accounts //account : list of all bank accounts ; (result)userAccounts : list of bank accounts belonging to the requested user
+            .Where(a => a.UserId == userId) // a.UserId == userId checks whether the account belongs to the requested user
+            .ToList();
+        // Where(...) filters the list of bank accounts
+        // ToList() converts the filtered result into a List<BankAccount>
+
+        return Ok(userAccounts);
+        // Returns HTTP status code 200 OK
+        // together with all bank accounts belonging to the requested user
+    }
+
+    [HttpPost("/api/users/{userId}/accounts")]
+    public ActionResult<BankAccount> CreateBankAccount(
+        int userId,
+        BankAccount newAccount)
+    {
+        newAccount.Id = accounts.Max(account => account.Id) + 1; //.max search for highest ID value and adds 1
+        newAccount.UserId = userId;
+
+        accounts.Add(newAccount);
+
+       return Ok(newAccount);
+       // Returns HTTP status code 200 OK together with the newly created bank account
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateBankAccount(int id, BankAccount updatedAccount)
+    {
+        var account = accounts.FirstOrDefault(account => account.Id == id);
+
+        if (account == null)
+        {
+            return NotFound();
+        }
+
+        account.AccountName = updatedAccount.AccountName;
+        account.Iban = updatedAccount.Iban;
+        account.Currency = updatedAccount.Currency;
+        account.Balance = updatedAccount.Balance;
+
+        return Ok(account);
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult DeleteBankAccount(int id)
+    {
+        var account = accounts.FirstOrDefault(account => account.Id == id); 
+        //firstOrDefault searches for the first BankAccount whose Id matches the requested id 
+        if (account == null)
+        {
+            return NotFound();
+        }
+
+        accounts.Remove(account);
+
+        return NoContent();
     }
 }
