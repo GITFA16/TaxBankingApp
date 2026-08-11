@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TaxBankingApi.Models;
+using TaxBankingApi.Services;
 
 namespace TaxBankingApi.Controllers;
 
@@ -65,12 +66,24 @@ public class TransactionsController : ControllerBase
 
     [HttpPost]
     public ActionResult<Transaction> CreateTransaction(Transaction newTransaction)
-{
-    newTransaction.Id = transactions.Count == 0 ? 1 //.count: number of elements in the list
-        : transactions.Max(transaction => transaction.Id) + 1;
+    {
+        if (transactions.Count == 0)
+        {
+            newTransaction.Id = 1;
+        }
+        else
+        {
+            newTransaction.Id =
+                transactions.Max(transaction => transaction.Id) + 1;
+        }
 
-    transactions.Add(newTransaction);
+        var taxCategoryService = new TaxCategoryService();
 
-    return StatusCode(201, newTransaction);
-}
+        newTransaction.SuggestedTaxCategory =
+            taxCategoryService.GetSuggestedCategory(newTransaction.Description);
+
+        transactions.Add(newTransaction);
+
+        return StatusCode(201, newTransaction);
+    }
 }

@@ -8,7 +8,7 @@ public class Transaction
 
     public DateTime BookingDate { get; set; }
 
-    public string Description { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty; // here the tax catagory will be suggested
 
     public decimal Amount { get; set; }
 

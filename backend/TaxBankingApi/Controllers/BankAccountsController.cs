@@ -37,6 +37,16 @@ public class BankAccountsController : ControllerBase
             Iban = "CH1200762011623852959",
             Currency = "CHF",
             Balance = 1200.75m
+        },
+
+        new BankAccount
+        {
+            Id = 4,
+            UserId = 2,
+            AccountName = "Hobby Account",
+            Iban = "CH3400762011623852960",
+            Currency = "CHF",
+            Balance = 4709.51m
         }
     };
 
