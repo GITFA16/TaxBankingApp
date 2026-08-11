@@ -86,4 +86,23 @@ public class TransactionsController : ControllerBase
 
         return StatusCode(201, newTransaction);
     }
+
+    [HttpGet("/api/bankaccounts/{bankAccountId}/tax-summary")]
+    public IActionResult GetTaxSummary(int bankAccountId)
+    {
+        var accountTransactions = transactions
+            .Where(transaction => transaction.BankAccountId == bankAccountId)
+            .ToList();
+
+        var taxSummary = accountTransactions
+            .Where(transaction => transaction.SuggestedTaxCategory != "Uncategorized") // Exclude transactions that are not categorized
+            .GroupBy(transaction => transaction.SuggestedTaxCategory)  // Group transactions by their suggested tax category
+            .ToDictionary(
+                group => group.Key, // Key: Tax category
+                group => group.Sum(transaction => Math.Abs(transaction.Amount)) 
+                // Value: Total amount for each tax category math.abs : negativ to positiv
+            );
+
+        return Ok(taxSummary);
+    }
 }
