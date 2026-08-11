@@ -62,4 +62,15 @@ public class TransactionsController : ControllerBase
 
         return Ok(accountTransactions);
     }
+
+    [HttpPost]
+    public ActionResult<Transaction> CreateTransaction(Transaction newTransaction)
+{
+    newTransaction.Id = transactions.Count == 0 ? 1 //.count: number of elements in the list
+        : transactions.Max(transaction => transaction.Id) + 1;
+
+    transactions.Add(newTransaction);
+
+    return StatusCode(201, newTransaction);
+}
 }

@@ -1,139 +1,112 @@
-using Microsoft.AspNetCore.Mvc; // Use ASP.NET Core MVC classes such as ControllerBase, ApiController, HttpGet, HttpDelete, Route, ActionResult
-using TaxBankingApi.Models; // Use the User model from TaxBankingApi.Models
+using Microsoft.AspNetCore.Mvc; // Use ASP.NET Core MVC classes
+using TaxBankingApi.Models; // Use the User model
 
-namespace TaxBankingApi.Controllers; // Namespace for grouping controller classes
+namespace TaxBankingApi.Controllers; // Namespace for controller classes
 
-[ApiController] // Attribute: tells ASP.NET Core that this class is an API controller
-[Route("api/[controller]")] // Defines the URL route. [controller] becomes "users"
-public class UsersController : ControllerBase // UsersController inherits from ControllerBase
+[ApiController] // Tells ASP.NET Core that this class is an API controller
+[Route("api/[controller]")] // Base route becomes: /api/users
+public class UsersController : ControllerBase
 {
-    [HttpGet] // GET /api/users ; This method handles HTTP GET requests
-    public ActionResult<IEnumerable<User>> GetUsers()
-    // public = accessible by ASP.NET Core
-    // ActionResult<IEnumerable<User>> = HTTP response containing a collection of User objects
-    // GetUsers = name of the method
+    // private = only accessible inside this class
+    // static = all instances info for this controller
+    // readonly = the list reference cannot be replaced
+    private static readonly List<User> users = new()
     {
-        var users = new List<User>
-   
+        new User
         {
-            new User
-            {
-                Id = 1,
-                FirstName = "Faizal",
-                LastName = "Alamudi",
-                Email = "faizal.alamudi@example.com"
-            },
+            Id = 1,
+            FirstName = "Faizal",
+            LastName = "Alamudi",
+            Email = "faizal.alamudi@example.com"
+        },
 
-            new User
-            {
-                Id = 2,
-                FirstName = "Simon",
-                LastName = "Ammann",
-                Email = "simon.ammann@example.com"
-            }
-        };
+        new User
+        {
+            Id = 2,
+            FirstName = "Simon",
+            LastName = "Ammann",
+            Email = "simon.ammann@example.com"
+        }
+    };
 
+
+    // READ ALL USERS
+    // GET /api/users
+    [HttpGet]
+    public ActionResult<IEnumerable<User>> GetUsers()
+    {
         return Ok(users);
-        // Ok() returns HTTP status code 200 OK
+        // Returns HTTP 200 OK with all users
     }
 
 
-    [HttpGet("{id}")]  //GET /api/users/{id}
-    // Handles HTTP GET requests with an ID parameter
+    // READ ONE USER
+    // GET /api/users/1
+    [HttpGet("{id}")]
     public ActionResult<User> GetUserById(int id)
-    // ActionResult<User> = HTTP response that can contain one User object
     {
-        var users = new List<User>
-        {
-            new User
-            {
-                Id = 1,
-                FirstName = "Faizal",
-                LastName = "Alamudi",
-                Email = "faizal.alamudi@example.com"
-            },
+        var user = users.FirstOrDefault(user => user.Id == id);
 
-            new User
-            {
-                Id = 2,
-                FirstName = "Simon",
-                LastName = "Ammann",
-                Email = "simon.ammann@example.com"
-            }
-        };
-
-        var user = users.FirstOrDefault(u => u.Id == id);
-        // FirstOrDefault searches for the first User whose Id matches the requested id
-        // If no matching user exists, the result is null
+        // FirstOrDefault searches for the first user
+        // whose Id matches the id from the URL
 
         if (user == null)
         {
             return NotFound();
-            // Returns HTTP status code 404 Not Found
+            // HTTP 404 Not Found
         }
 
         return Ok(user);
-        // Returns HTTP status code 200 OK together with the User object
+        // HTTP 200 OK with the selected user
     }
 
+
+    // UPDATE USER
+    // PUT /api/users/1
     [HttpPut("{id}")]
     public IActionResult UpdateUser(int id, User updatedUser)
     {
         var user = users.FirstOrDefault(user => user.Id == id);
 
+        // Search for the user that should be updated
+
         if (user == null)
         {
             return NotFound();
         }
 
+        // Update the editable properties
         user.FirstName = updatedUser.FirstName;
         user.LastName = updatedUser.LastName;
         user.Email = updatedUser.Email;
 
+        // We do not change user.Id
+        // because the Id identifies the user
+
         return Ok(user);
+        // HTTP 200 OK with the updated user
     }
 
+
+    // DELETE USER
+    // DELETE /api/users/1
     [HttpDelete("{id}")]
-    // Handles HTTP DELETE requests
     public IActionResult DeleteUser(int id)
-    // IActionResult = the method returns an HTTP response
-    // int id = ID of the user that should be deleted
     {
-        var users = new List<User>
-        {
-            new User
-            {
-                Id = 1,
-                FirstName = "Faizal",
-                LastName = "Alamudi",
-                Email = "faizal.alamudi@example.com"
-            },
+        var user = users.FirstOrDefault(user => user.Id == id);
 
-            new User
-            {
-                Id = 2,
-                FirstName = "Simon",
-                LastName = "Ammann",
-                Email = "simon.ammann@example.com"
-            }
-        };
-
-        var user = users.FirstOrDefault(u => u.Id == id);
-        // Search for the User whose Id matches the requested id
+        // Search for the user that should be deleted
 
         if (user == null)
         {
             return NotFound();
-            // If the user does not exist, return HTTP 404 Not Found
         }
 
         users.Remove(user);
-        // Remove the User object from the list
+        // Remove the user from the shared list
 
         return NoContent();
-        // Returns HTTP status code 204 No Content
-        // 204 means the delete operation was successful
-        // No response body is returned
+        // HTTP 204 No Content
+        // Delete was successful
     }
-
 }
