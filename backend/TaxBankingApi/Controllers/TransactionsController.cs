@@ -105,4 +105,21 @@ public class TransactionsController : ControllerBase
 
         return Ok(taxSummary);
     }
+    [HttpGet("/api/bankaccounts/{bankAccountId}/tax-transactions")]
+    public ActionResult<IEnumerable<Transaction>> GetTaxTransactions(int bankAccountId)
+    {
+        var taxTransactions = transactions
+            .Where(transaction =>
+                transaction.BankAccountId == bankAccountId &&   //transaction belongs to the requested bank account
+                transaction.SuggestedTaxCategory != "Uncategorized") // Exclude transactions that are not categorized
+            .ToList();
+
+        return Ok(taxTransactions);
+
+        // exp : Transaction 1
+        // BankAccountId = 1
+        // Category = Krankenkasse
+        // 1 == 1 ✅
+        // Category != Uncategorized ✅
+    }
 }

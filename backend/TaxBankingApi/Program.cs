@@ -1,6 +1,16 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.EntityFrameworkCore;
+using TaxBankingApi.Data;
 
+var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite( //AppDbContext akan menggunakan SQLite.
+        builder.Configuration.GetConnectionString("DefaultConnection")
+        //get connection string named DefaultConnection from appsettings.json.
+    )
+);
+//AppDbContext to ASP.NET Dependency Injection.
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
