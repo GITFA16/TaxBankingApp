@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore; //EF c# to database mapping
 using TaxBankingApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);

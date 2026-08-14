@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaxBankingApi.Models;
 using TaxBankingApi.Services;
+using TaxBankingApi.Data; // Use AppDbContext for database access
 
 namespace TaxBankingApi.Controllers;
 
@@ -8,41 +9,71 @@ namespace TaxBankingApi.Controllers;
 [Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
-    private static readonly List<Transaction> transactions = new()
+    // OLD VERSION:
+    // private static readonly List<Transaction> transactions = new()
+    // {
+    //     new Transaction
+    //     {
+    //         Id = 1,
+    //         BankAccountId = 1,
+    //         BookingDate = new DateTime(2026, 8, 1),
+    //         Description = "Swica Krankenversicherung August",
+    //         Amount = -420.00m,
+    //         Currency = "CHF",
+    //         SuggestedTaxCategory = "Krankenkasse"
+    //     },
+    //
+    //     new Transaction
+    //     {
+    //         Id = 2,
+    //         BankAccountId = 1,
+    //         BookingDate = new DateTime(2026, 8, 3),
+    //         Description = "ABB TS NDS Software Engineering Course",
+    //         Amount = -9500.17m,
+    //         Currency = "CHF",
+    //         SuggestedTaxCategory = "Weiterbildung"
+    //     }
+    // };
+
+
+    // NEW VERSION:
+    // _context gives this controller access to the database through Entity Framework Core
+    private readonly AppDbContext _context;
+
+    // Constructor
+    // ASP.NET Core automatically provides AppDbContext through Dependency Injection
+    public TransactionsController(AppDbContext context)
     {
-        new Transaction
-        {
-            Id = 1,
-            BankAccountId = 1,
-            BookingDate = new DateTime(2026, 8, 1),
-            Description = "Swica Krankenversicherung August",
-            Amount = -420.00m,
-            Currency = "CHF",
-            SuggestedTaxCategory = "Krankenkasse"
-        },
+        _context = context;
+    }
 
-        new Transaction
-        {
-            Id = 2,
-            BankAccountId = 1,
-            BookingDate = new DateTime(2026, 8, 3),
-            Description = "ABB TS NDS Software Engineering Course",
-            Amount = -9500.17m,
-            Currency = "CHF",
-            SuggestedTaxCategory = "Weiterbildung"
-        }
-    };
-
+    // READ ALL TRANSACTIONS
+    // GET /api/transactions
     [HttpGet]
     public ActionResult<IEnumerable<Transaction>> GetTransactions()
     {
-        return Ok(transactions);
+        // OLD VERSION:
+        // return Ok(transactions);
+
+        // NEW VERSION:
+        // _context.Transactions = Transactions table in the database
+        // ToList() reads all transactions from the database
+        return Ok(_context.Transactions.ToList());
     }
 
+
+    // READ ONE TRANSACTION BY ID
+    // GET /api/transactions/{id}
     [HttpGet("{id}")]
     public ActionResult<Transaction> GetTransactionById(int id)
     {
-        var transaction = transactions
+        // OLD VERSION:
+        // var transaction = transactions
+        //     .FirstOrDefault(transaction => transaction.Id == id);
+
+        // NEW VERSION:
+        // Search the Transactions table in the database
+        var transaction = _context.Transactions
             .FirstOrDefault(transaction => transaction.Id == id);
 
         if (transaction == null)
@@ -53,65 +84,134 @@ public class TransactionsController : ControllerBase
         return Ok(transaction);
     }
 
+
+    // READ TRANSACTIONS FOR ONE BANK ACCOUNT
+    // GET /api/bankaccounts/{bankAccountId}/transactions
     [HttpGet("/api/bankaccounts/{bankAccountId}/transactions")]
     public ActionResult<IEnumerable<Transaction>> GetTransactionsByBankAccount(
         int bankAccountId)
     {
-        var accountTransactions = transactions
-            .Where(transaction => transaction.BankAccountId == bankAccountId)
+        // OLD VERSION:
+        // var accountTransactions = transactions
+        //     .Where(transaction => transaction.BankAccountId == bankAccountId)
+        //     .ToList();
+
+        // NEW VERSION:
+        // Read only transactions from the database
+        // where BankAccountId matches the requested bankAccountId
+        var accountTransactions = _context.Transactions
+            .Where(transaction =>
+                transaction.BankAccountId == bankAccountId)
             .ToList();
 
-        return Ok(accountTransactions);
+           return Ok(accountTransactions);
     }
 
+
+    // CREATE TRANSACTION
+    // POST /api/transactions
     [HttpPost]
-    public ActionResult<Transaction> CreateTransaction(Transaction newTransaction)
+    public ActionResult<Transaction> CreateTransaction(
+        Transaction newTransaction)
     {
-        if (transactions.Count == 0)
-        {
-            newTransaction.Id = 1;
-        }
-        else
-        {
-            newTransaction.Id =
-                transactions.Max(transaction => transaction.Id) + 1;
-        }
+        // OLD VERSION:
+        // if (transactions.Count == 0)
+        // {
+        //     newTransaction.Id = 1;
+        // }
+        // else
+        // {
+        //     newTransaction.Id =
+        //         transactions.Max(transaction => transaction.Id) + 1;
+        // }
+
+        // NEW VERSION:
+        // We do not manually create the Id anymore.
+        // SQLite / EF Core will generate the Id automatically.
 
         var taxCategoryService = new TaxCategoryService();
 
         newTransaction.SuggestedTaxCategory =
-            taxCategoryService.GetSuggestedCategory(newTransaction.Description);
+            taxCategoryService.GetSuggestedCategory(
+                newTransaction.Description
+            );
 
-        transactions.Add(newTransaction);
+        // NEW VERSION:
+        // Add the transaction to the database
+        _context.Transactions.Add(newTransaction);
+
+        // SaveChanges() writes the changes permanently to SQLite
+        _context.SaveChanges();
 
         return StatusCode(201, newTransaction);
     }
 
+
+    // TAX SUMMARY FOR ONE BANK ACCOUNT
+    // GET /api/bankaccounts/{bankAccountId}/tax-summary
     [HttpGet("/api/bankaccounts/{bankAccountId}/tax-summary")]
     public IActionResult GetTaxSummary(int bankAccountId)
     {
-        var accountTransactions = transactions
-            .Where(transaction => transaction.BankAccountId == bankAccountId)
+        // OLD VERSION:
+        // var accountTransactions = transactions
+        //     .Where(transaction => transaction.BankAccountId == bankAccountId)
+        //     .ToList();
+
+        // NEW VERSION:
+        // Read the transactions for this bank account from the database
+        var accountTransactions = _context.Transactions
+            .Where(transaction =>
+                transaction.BankAccountId == bankAccountId)
             .ToList();
 
+
         var taxSummary = accountTransactions
-            .Where(transaction => transaction.SuggestedTaxCategory != "Uncategorized") // Exclude transactions that are not categorized
-            .GroupBy(transaction => transaction.SuggestedTaxCategory)  // Group transactions by their suggested tax category
+            .Where(transaction =>
+                transaction.SuggestedTaxCategory != "Uncategorized")
+            // Exclude transactions that are not categorized
+
+            .GroupBy(transaction =>
+                transaction.SuggestedTaxCategory)
+            // Group transactions by their suggested tax category
+
             .ToDictionary(
-                group => group.Key, // Key: Tax category
-                group => group.Sum(transaction => Math.Abs(transaction.Amount)) 
-                // Value: Total amount for each tax category math.abs : negativ to positiv
+                group => group.Key,
+                // Key: Tax category
+
+                group => group.Sum(
+                    transaction =>
+                        Math.Abs(transaction.Amount)
+                )
+                // Value: Total amount for each tax category
+                // Math.Abs: negative amount becomes positive
             );
 
         return Ok(taxSummary);
     }
+
+
+    // READ ONLY TAX-RELEVANT TRANSACTIONS
+    // GET /api/bankaccounts/{bankAccountId}/tax-transactions
     [HttpGet("/api/bankaccounts/{bankAccountId}/tax-transactions")]
-    public ActionResult<IEnumerable<Transaction>> GetTaxTransactions(int bankAccountId)
+    public ActionResult<IEnumerable<Transaction>> GetTaxTransactions(
+        int bankAccountId)
     {
-        var taxTransactions = transactions
+        // OLD VERSION:
+        // var taxTransactions = transactions
+        //     .Where(transaction =>
+        //         transaction.BankAccountId == bankAccountId &&
+        //         transaction.SuggestedTaxCategory != "Uncategorized")
+        //     .ToList();
+
+        // NEW VERSION:
+        var taxTransactions = _context.Transactions
             .Where(transaction =>
-                transaction.BankAccountId == bankAccountId &&   //transaction belongs to the requested bank account
-                transaction.SuggestedTaxCategory != "Uncategorized") // Exclude transactions that are not categorized
+                transaction.BankAccountId == bankAccountId &&
+                // transaction belongs to the requested bank account
+
+                transaction.SuggestedTaxCategory != "Uncategorized")
+                // Exclude transactions that are not categorized
+
             .ToList();
 
         return Ok(taxTransactions);

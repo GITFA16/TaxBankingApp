@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc; // Use ASP.NET Core MVC classes
 using TaxBankingApi.Models; // Use the User model
+using TaxBankingApi.Data; // NEW: Use AppDbContext for database access
 
 namespace TaxBankingApi.Controllers; // Namespace for controller classes
 
@@ -7,27 +8,47 @@ namespace TaxBankingApi.Controllers; // Namespace for controller classes
 [Route("api/[controller]")] // Base route becomes: /api/users
 public class UsersController : ControllerBase
 {
+    // OLD VERSION:
     // private = only accessible inside this class
     // static = all instances info for this controller
     // readonly = the list reference cannot be replaced
-    private static readonly List<User> users = new()
-    {
-        new User
-        {
-            Id = 1,
-            FirstName = "Faizal",
-            LastName = "Alamudi",
-            Email = "faizal.alamudi@example.com"
-        },
+    //
+    // private static readonly List<User> users = new()
+    // {
+    //     new User
+    //     {
+    //         Id = 1,
+    //         FirstName = "Faizal",
+    //         LastName = "Alamudi",
+    //         Email = "faizal.alamudi@example.com"
+    //     },
+    //
+    //     new User
+    //     {
+    //         Id = 2,
+    //         FirstName = "Simon",
+    //         LastName = "Ammann",
+    //         Email = "simon.ammann@example.com"
+    //     }
+    // };
 
-        new User
-        {
-            Id = 2,
-            FirstName = "Simon",
-            LastName = "Ammann",
-            Email = "simon.ammann@example.com"
-        }
-    };
+
+    // NEW VERSION:
+    // _context gives this controller access to the database through Entity Framework Core.
+    // readonly means the _context reference cannot be replaced after the constructor has assigned it.
+    // Important: readonly does NOT make the database read-only.
+    // We can still add, update, and delete data through _context.
+    private readonly AppDbContext _context;
+
+
+    // Constructor
+    // ASP.NET Core provides AppDbContext automatically through Dependency Injection.
+    public UsersController(AppDbContext context)
+    {
+        // Store the AppDbContext provided by ASP.NET Core in _context
+        // so that all methods in this controller can access the database.
+        _context = context;
+    }
 
 
     // READ ALL USERS
@@ -35,6 +56,13 @@ public class UsersController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<User>> GetUsers()
     {
+        // OLD VERSION:
+        // return Ok(users);
+
+        // NEW VERSION:
+        // Read all users from the Users table in the database
+        var users = _context.Users.ToList();
+
         return Ok(users);
         // Returns HTTP 200 OK with all users
     }
@@ -45,7 +73,12 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<User> GetUserById(int id)
     {
-        var user = users.FirstOrDefault(user => user.Id == id);
+        // OLD VERSION:
+        // var user = users.FirstOrDefault(user => user.Id == id);
+
+        // NEW VERSION:
+        var user = _context.Users
+            .FirstOrDefault(user => user.Id == id);
 
         // FirstOrDefault searches for the first user
         // whose Id matches the id from the URL
@@ -61,12 +94,37 @@ public class UsersController : ControllerBase
     }
 
 
+    // CREATE USER
+    // POST /api/users
+    [HttpPost]
+    public ActionResult<User> CreateUser(User newUser)
+    {
+        // OLD VERSION:
+        // There was no POST method in the previous UsersController.
+
+        // NEW VERSION:
+        // Add the new user to the Users table
+        _context.Users.Add(newUser);
+
+        // SaveChanges writes the new user permanently to SQLite
+        _context.SaveChanges();
+
+        return StatusCode(201, newUser);
+        // HTTP 201 Created
+    }
+
+
     // UPDATE USER
     // PUT /api/users/1
     [HttpPut("{id}")]
     public IActionResult UpdateUser(int id, User updatedUser)
     {
-        var user = users.FirstOrDefault(user => user.Id == id);
+        // OLD VERSION:
+        // var user = users.FirstOrDefault(user => user.Id == id);
+
+        // NEW VERSION:
+        var user = _context.Users
+            .FirstOrDefault(user => user.Id == id);
 
         // Search for the user that should be updated
 
@@ -83,6 +141,15 @@ public class UsersController : ControllerBase
         // We do not change user.Id
         // because the Id identifies the user
 
+        // OLD VERSION:
+        // return Ok(user);
+        //
+        // With the static List, changing the object in memory was enough.
+
+        // NEW VERSION:
+        // Save the updated values permanently to the database
+        _context.SaveChanges();
+
         return Ok(user);
         // HTTP 200 OK with the updated user
     }
@@ -93,7 +160,12 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult DeleteUser(int id)
     {
-        var user = users.FirstOrDefault(user => user.Id == id);
+        // OLD VERSION:
+        // var user = users.FirstOrDefault(user => user.Id == id);
+
+        // NEW VERSION:
+        var user = _context.Users
+            .FirstOrDefault(user => user.Id == id);
 
         // Search for the user that should be deleted
 
@@ -102,8 +174,16 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        users.Remove(user);
+        // OLD VERSION:
+        // users.Remove(user);
         // Remove the user from the shared list
+
+        // NEW VERSION:
+        // Mark the user for deletion from the database
+        _context.Users.Remove(user);
+
+        // Save the deletion permanently to SQLite
+        _context.SaveChanges();
 
         return NoContent();
         // HTTP 204 No Content
