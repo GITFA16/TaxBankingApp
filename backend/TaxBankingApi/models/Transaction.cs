@@ -15,4 +15,8 @@ public class Transaction
     public string Currency { get; set; } = "CHF";
 
     public string SuggestedTaxCategory { get; set; } = string.Empty;
+
+    public BankAccount? BankAccount { get; set; }
+    // Navigation property
+    // This Transaction belongs to one BankAccount
 }

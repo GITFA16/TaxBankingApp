@@ -56,9 +56,6 @@ public class UsersController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<User>> GetUsers()
     {
-        // OLD VERSION:
-        // return Ok(users);
-
         // NEW VERSION:
         // Read all users from the Users table in the database
         var users = _context.Users.ToList();
@@ -76,13 +73,11 @@ public class UsersController : ControllerBase
         // OLD VERSION:
         // var user = users.FirstOrDefault(user => user.Id == id);
 
-        // NEW VERSION:
-        var user = _context.Users
+         var user = _context.Users
             .FirstOrDefault(user => user.Id == id);
 
         // FirstOrDefault searches for the first user
         // whose Id matches the id from the URL
-
         if (user == null)
         {
             return NotFound();
@@ -99,10 +94,6 @@ public class UsersController : ControllerBase
     [HttpPost]
     public ActionResult<User> CreateUser(User newUser)
     {
-        // OLD VERSION:
-        // There was no POST method in the previous UsersController.
-
-        // NEW VERSION:
         // Add the new user to the Users table
         _context.Users.Add(newUser);
 
@@ -127,7 +118,6 @@ public class UsersController : ControllerBase
             .FirstOrDefault(user => user.Id == id);
 
         // Search for the user that should be updated
-
         if (user == null)
         {
             return NotFound();
@@ -138,15 +128,9 @@ public class UsersController : ControllerBase
         user.LastName = updatedUser.LastName;
         user.Email = updatedUser.Email;
 
-        // We do not change user.Id
-        // because the Id identifies the user
-
-        // OLD VERSION:
-        // return Ok(user);
-        //
+        // We do not change user.Id, because the Id identifies the user
         // With the static List, changing the object in memory was enough.
 
-        // NEW VERSION:
         // Save the updated values permanently to the database
         _context.SaveChanges();
 
@@ -188,5 +172,61 @@ public class UsersController : ControllerBase
         return NoContent();
         // HTTP 204 No Content
         // Delete was successful
+    }
+
+    // TAX SUMMARY FOR ALL BANK ACCOUNTS OF ONE USER
+    // GET /api/users/1/tax-summary
+    [HttpGet("{userId}/tax-summary")]
+    public IActionResult GetUserTaxSummary(int userId)
+    {
+    // Get all BankAccount IDs belonging to the requested user
+    var bankAccountIds = _context.BankAccounts
+        .Where(account => account.UserId == userId)
+        .Select(account => account.Id) //get only the Ids of the user's bank accounts
+        .ToList();
+
+    // Get all transactions belonging to those bank accounts
+    var userTransactions = _context.Transactions
+        .Where(transaction =>
+            bankAccountIds.Contains(transaction.BankAccountId))
+        .ToList();
+
+    // Exclude uncategorized transactions
+    // Group by tax category
+    // Calculate total amount for each category
+    var taxSummary = userTransactions
+        .Where(transaction =>
+            transaction.SuggestedTaxCategory != "Uncategorized")
+        .GroupBy(transaction =>
+            transaction.SuggestedTaxCategory)
+        .ToDictionary(
+            group => group.Key,
+            group => group.Sum(
+                transaction => Math.Abs(transaction.Amount)
+            )
+        );
+
+    return Ok(taxSummary);
+    }
+
+    // TAX-RELEVANT TRANSACTIONS FOR ALL BANK ACCOUNTS OF ONE USER
+    // GET /api/users/1/tax-transactions
+    [HttpGet("{userId}/tax-transactions")]
+    public ActionResult<IEnumerable<Transaction>> GetUserTaxTransactions(int userId)
+    {
+        // Get all BankAccount IDs belonging to the requested user
+        var bankAccountIds = _context.BankAccounts
+            .Where(account => account.UserId == userId)
+            .Select(account => account.Id)
+            .ToList();
+
+        // Get all tax-relevant transactions from all accounts of the user
+        var taxTransactions = _context.Transactions
+            .Where(transaction =>
+                bankAccountIds.Contains(transaction.BankAccountId) &&
+                transaction.SuggestedTaxCategory != "Uncategorized")
+            .ToList();
+
+        return Ok(taxTransactions);
     }
 }

@@ -7,5 +7,7 @@ namespace TaxBankingApi.Models //use for the group name of the class
         public string LastName { get; set; } = string.Empty; 
         public string Email { get; set; } = string.Empty; 
       
+        public List<BankAccount> BankAccounts { get; set; } = new();
+        // One User can have many BankAccounts
     }
 }

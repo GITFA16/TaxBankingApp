@@ -9,33 +9,6 @@ namespace TaxBankingApi.Controllers;
 [Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
-    // OLD VERSION:
-    // private static readonly List<Transaction> transactions = new()
-    // {
-    //     new Transaction
-    //     {
-    //         Id = 1,
-    //         BankAccountId = 1,
-    //         BookingDate = new DateTime(2026, 8, 1),
-    //         Description = "Swica Krankenversicherung August",
-    //         Amount = -420.00m,
-    //         Currency = "CHF",
-    //         SuggestedTaxCategory = "Krankenkasse"
-    //     },
-    //
-    //     new Transaction
-    //     {
-    //         Id = 2,
-    //         BankAccountId = 1,
-    //         BookingDate = new DateTime(2026, 8, 3),
-    //         Description = "ABB TS NDS Software Engineering Course",
-    //         Amount = -9500.17m,
-    //         Currency = "CHF",
-    //         SuggestedTaxCategory = "Weiterbildung"
-    //     }
-    // };
-
-
     // NEW VERSION:
     // _context gives this controller access to the database through Entity Framework Core
     private readonly AppDbContext _context;
@@ -52,9 +25,6 @@ public class TransactionsController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<Transaction>> GetTransactions()
     {
-        // OLD VERSION:
-        // return Ok(transactions);
-
         // NEW VERSION:
         // _context.Transactions = Transactions table in the database
         // ToList() reads all transactions from the database
@@ -67,9 +37,6 @@ public class TransactionsController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<Transaction> GetTransactionById(int id)
     {
-        // OLD VERSION:
-        // var transaction = transactions
-        //     .FirstOrDefault(transaction => transaction.Id == id);
 
         // NEW VERSION:
         // Search the Transactions table in the database
@@ -91,10 +58,6 @@ public class TransactionsController : ControllerBase
     public ActionResult<IEnumerable<Transaction>> GetTransactionsByBankAccount(
         int bankAccountId)
     {
-        // OLD VERSION:
-        // var accountTransactions = transactions
-        //     .Where(transaction => transaction.BankAccountId == bankAccountId)
-        //     .ToList();
 
         // NEW VERSION:
         // Read only transactions from the database
@@ -114,17 +77,6 @@ public class TransactionsController : ControllerBase
     public ActionResult<Transaction> CreateTransaction(
         Transaction newTransaction)
     {
-        // OLD VERSION:
-        // if (transactions.Count == 0)
-        // {
-        //     newTransaction.Id = 1;
-        // }
-        // else
-        // {
-        //     newTransaction.Id =
-        //         transactions.Max(transaction => transaction.Id) + 1;
-        // }
-
         // NEW VERSION:
         // We do not manually create the Id anymore.
         // SQLite / EF Core will generate the Id automatically.
@@ -152,11 +104,6 @@ public class TransactionsController : ControllerBase
     [HttpGet("/api/bankaccounts/{bankAccountId}/tax-summary")]
     public IActionResult GetTaxSummary(int bankAccountId)
     {
-        // OLD VERSION:
-        // var accountTransactions = transactions
-        //     .Where(transaction => transaction.BankAccountId == bankAccountId)
-        //     .ToList();
-
         // NEW VERSION:
         // Read the transactions for this bank account from the database
         var accountTransactions = _context.Transactions

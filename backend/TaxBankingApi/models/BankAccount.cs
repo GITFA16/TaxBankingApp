@@ -15,4 +15,13 @@ public class BankAccount
     public decimal Balance { get; set; } 
     //double : binary floating point, exp: 0.300000004
     //decimal : decimal floating point, exp: 0.3
+
+    public User? User { get; set; }
+    // This BankAccount belongs to one User
+
+    public List<Transaction> Transactions { get; set; } = new();
+     // One BankAccount can have many Transactions
+
+
+
 }

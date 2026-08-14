@@ -8,51 +8,6 @@ namespace TaxBankingApi.Controllers;
 [Route("api/[controller]")]
 public class BankAccountsController : ControllerBase
 {
-    // OLD VERSION:
-    // private static readonly List<BankAccount> accounts = new() // Static list to hold bank account data
-    // {
-    //     new BankAccount
-    //     {
-    //         Id = 1,
-    //         UserId = 1, // Identifier for the user who owns the bank account
-    //         AccountName = "Private Account",
-    //         Iban = "CH9300762011623852957",
-    //         Currency = "CHF",
-    //         Balance = 100400.50m
-    //     },
-    //
-    //     new BankAccount
-    //     {
-    //         Id = 2,
-    //         UserId = 1,
-    //         AccountName = "Savings Account",
-    //         Iban = "CH5600762011623852958",
-    //         Currency = "CHF",
-    //         Balance = 12500.00m
-    //     },
-    //
-    //     new BankAccount
-    //     {
-    //         Id = 3,
-    //         UserId = 2,
-    //         AccountName = "Private Account",
-    //         Iban = "CH1200762011623852959",
-    //         Currency = "CHF",
-    //         Balance = 1200.75m
-    //     },
-    //
-    //     new BankAccount
-    //     {
-    //         Id = 4,
-    //         UserId = 2,
-    //         AccountName = "Hobby Account",
-    //         Iban = "CH3400762011623852960",
-    //         Currency = "CHF",
-    //         Balance = 4709.51m
-    //     }
-    // };
-
-
     // NEW VERSION:
     // _context gives this controller access to the database through Entity Framework Core
     private readonly AppDbContext _context;
@@ -63,7 +18,6 @@ public class BankAccountsController : ControllerBase
     {
         _context = context;
     }
-
 
     // READ ALL BANK ACCOUNTS
     // GET /api/bankaccounts
@@ -79,7 +33,6 @@ public class BankAccountsController : ControllerBase
 
         return Ok(accounts);
     }
-
 
     // READ ONE BANK ACCOUNT BY ID
     // GET /api/bankaccounts/1
@@ -101,7 +54,6 @@ public class BankAccountsController : ControllerBase
 
         return Ok(account);
     }
-
 
     // READ ALL BANK ACCOUNTS OF ONE USER
     // GET /api/users/1/accounts
@@ -131,7 +83,6 @@ public class BankAccountsController : ControllerBase
         // together with all bank accounts belonging to the requested user
     }
 
-
     // CREATE NEW BANK ACCOUNT FOR ONE USER
     // POST /api/users/1/accounts
     [HttpPost("/api/users/{userId}/accounts")]
@@ -139,18 +90,6 @@ public class BankAccountsController : ControllerBase
         int userId,
         BankAccount newAccount)
     {
-        // OLD VERSION:
-        // newAccount.Id = accounts.Max(account => account.Id) + 1;
-        // .Max searches for the highest ID value and adds 1
-        //
-        // newAccount.UserId = userId;
-        //
-        // accounts.Add(newAccount);
-        //
-        // return Ok(newAccount);
-        // Returns HTTP status code 200 OK together with the newly created bank account
-
-
         // NEW VERSION:
         // We do not manually generate newAccount.Id anymore.
         // EF Core / SQLite will generate the Id automatically.
@@ -192,11 +131,6 @@ public class BankAccountsController : ControllerBase
         account.Currency = updatedAccount.Currency;
         account.Balance = updatedAccount.Balance;
 
-        // OLD VERSION:
-        // return Ok(account);
-        //
-        // With the static List, changing the object in memory was enough.
-
         // NEW VERSION:
         // Save the updated values permanently to the database
         _context.SaveChanges();
@@ -204,15 +138,11 @@ public class BankAccountsController : ControllerBase
         return Ok(account);
     }
 
-
     // DELETE BANK ACCOUNT
     // DELETE /api/bankaccounts/1
     [HttpDelete("{id}")]
     public IActionResult DeleteBankAccount(int id)
     {
-        // OLD VERSION:
-        // var account = accounts.FirstOrDefault(account => account.Id == id);
-        // firstOrDefault searches for the first BankAccount whose Id matches the requested id
 
         // NEW VERSION:
         var account = _context.BankAccounts
