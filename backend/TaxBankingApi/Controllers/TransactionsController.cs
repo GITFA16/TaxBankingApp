@@ -169,4 +169,67 @@ public class TransactionsController : ControllerBase
         // 1 == 1 ✅
         // Category != Uncategorized ✅
     }
+
+    // UPDATE TRANSACTION
+    // PUT /api/transactions/1
+    [HttpPut("{id}")]
+    public IActionResult UpdateTransaction(
+        int id,
+        Transaction updatedTransaction)
+    {
+        // Find the transaction in the database
+        var transaction = _context.Transactions
+            .FirstOrDefault(transaction => transaction.Id == id);
+
+        if (transaction == null)
+        {
+            return NotFound();
+        }
+
+        // Update editable properties
+        transaction.BankAccountId = updatedTransaction.BankAccountId;
+        transaction.BookingDate = updatedTransaction.BookingDate;
+        transaction.Description = updatedTransaction.Description;
+        transaction.Amount = updatedTransaction.Amount;
+        transaction.Currency = updatedTransaction.Currency;
+
+        // Recalculate the tax category because
+        // the transaction description may have changed
+        var taxCategoryService = new TaxCategoryService();
+
+        transaction.SuggestedTaxCategory =
+            taxCategoryService.GetSuggestedCategory(
+                transaction.Description
+            );
+
+        // Save the changes permanently to SQLite
+        _context.SaveChanges();
+
+        return Ok(transaction);
+    }
+
+    // DELETE TRANSACTION
+    // DELETE /api/transactions/1
+    [HttpDelete("{id}")]
+    public IActionResult DeleteTransaction(int id)
+    {
+        // Find the transaction in the database
+        var transaction = _context.Transactions
+            .FirstOrDefault(transaction => transaction.Id == id);
+
+        if (transaction == null)
+        {
+            return NotFound();
+        }
+
+        // Mark the transaction for deletion
+        _context.Transactions.Remove(transaction);
+
+        // Save the deletion permanently to SQLite
+        _context.SaveChanges();
+
+        return NoContent();
+        // HTTP 204 No Content
+    }
+
 }

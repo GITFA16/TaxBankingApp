@@ -16,4 +16,6 @@ public class AppDbContext : DbContext      //database context class that inherit
 
     public DbSet<Transaction> Transactions { get; set; } //database set for the Transaction entity
 
+    public DbSet<TaxCategory> TaxCategories { get; set; }
+
 }

@@ -7,6 +7,10 @@ namespace TaxBankingApi.Controllers;
 [Route("api/[controller]")]
 public class TaxCategoriesController : ControllerBase
 {
+    // Tax categories are standard reference data.
+    // They are read-only and cannot be created, updated, or deleted by the user.
+    // static = one shared list for the application
+    // readonly = the list reference cannot be replaced
     private static readonly List<TaxCategory> categories = new()
     {
         new TaxCategory
@@ -66,6 +70,9 @@ public class TaxCategoriesController : ControllerBase
         }
     };
 
+
+    // READ ALL STANDARD TAX CATEGORIES
+    // GET /api/taxcategories
     [HttpGet]
     public ActionResult<IEnumerable<TaxCategory>> GetTaxCategories()
     {
