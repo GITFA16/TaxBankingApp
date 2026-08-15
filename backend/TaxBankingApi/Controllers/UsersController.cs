@@ -70,9 +70,6 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<User> GetUserById(int id)
     {
-        // OLD VERSION:
-        // var user = users.FirstOrDefault(user => user.Id == id);
-
          var user = _context.Users
             .FirstOrDefault(user => user.Id == id);
 
@@ -110,9 +107,6 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult UpdateUser(int id, User updatedUser)
     {
-        // OLD VERSION:
-        // var user = users.FirstOrDefault(user => user.Id == id);
-
         // NEW VERSION:
         var user = _context.Users
             .FirstOrDefault(user => user.Id == id);
@@ -144,9 +138,6 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult DeleteUser(int id)
     {
-        // OLD VERSION:
-        // var user = users.FirstOrDefault(user => user.Id == id);
-
         // NEW VERSION:
         var user = _context.Users
             .FirstOrDefault(user => user.Id == id);
@@ -157,11 +148,6 @@ public class UsersController : ControllerBase
         {
             return NotFound();
         }
-
-        // OLD VERSION:
-        // users.Remove(user);
-        // Remove the user from the shared list
-
         // NEW VERSION:
         // Mark the user for deletion from the database
         _context.Users.Remove(user);

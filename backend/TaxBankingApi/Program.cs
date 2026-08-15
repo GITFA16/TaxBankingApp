@@ -13,7 +13,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //AppDbContext to ASP.NET Dependency Injection.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
