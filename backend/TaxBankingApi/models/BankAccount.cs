@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace TaxBankingApi.Models; 
 
 public class BankAccount
@@ -17,6 +19,7 @@ public class BankAccount
     //double : binary floating point, exp: 0.300000004
     //decimal : decimal floating point, exp: 0.3
 
+    [JsonIgnore]
     public User? User { get; set; }
     // This BankAccount belongs to one User
 

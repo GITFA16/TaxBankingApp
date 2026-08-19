@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace TaxBankingApi.Models; //Group of the class Models
 
 public class Transaction
@@ -17,6 +19,7 @@ public class Transaction
 
     public string SuggestedTaxCategory { get; set; } = string.Empty;
 
+    [JsonIgnore]
     public BankAccount? BankAccount { get; set; }
     // Navigation property
     // This Transaction belongs to one BankAccount
