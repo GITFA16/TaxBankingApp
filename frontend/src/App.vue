@@ -15,8 +15,8 @@ import taxoraIcon from './assets/taxora_icon.png'
           <v-img
             :src="taxoraWordmark"
             alt="Taxora"
-            width="120"
-            height="40"
+            width="180"
+            height="48"
             contain
           />
         </v-list-item>
@@ -45,6 +45,12 @@ import taxoraIcon from './assets/taxora_icon.png'
         <v-list-item
           title="Tax Summary"
           to="/tax-summary"
+        />
+
+        <!-- Tax Categories -->
+        <v-list-item
+          title="Tax Categories"
+          to="/tax-categories"
         />
 
       </v-list>

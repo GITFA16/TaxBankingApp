@@ -4,6 +4,7 @@ import UsersView from '../views/UsersView.vue'
 import BankAccountsView from '../views/BankAccountsView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
 import TaxSummaryView from '../views/TaxSummaryView.vue'
+import TaxCategoriesView from '../views/TaxCategoriesView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -36,6 +37,12 @@ const router = createRouter({
       path: '/tax-summary',
       name: 'tax-summary',
       component: TaxSummaryView,
+    },
+
+    {
+      path: '/tax-categories',
+      name: 'tax-categories',
+      component: TaxCategoriesView,
     },
     
   ],

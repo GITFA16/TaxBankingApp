@@ -50,9 +50,9 @@ public class TaxCategoryService
             return "Vorsorge 3a";
         }
 
-        if (text.Contains("mortage interest") ||
+        if (text.Contains("mortgage interest") ||
             text.Contains("hypothek") ||
-            text.Contains("mortage") ||
+            text.Contains("mortgage") ||
             text.Contains("zins") ||
             text.Contains("interest"))
         {
