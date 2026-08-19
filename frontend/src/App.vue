@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar>
       <v-app-bar-title>
-        TaxOra
+        Taxora
       </v-app-bar-title>
     </v-app-bar>
 
