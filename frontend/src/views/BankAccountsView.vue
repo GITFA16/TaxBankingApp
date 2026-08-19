@@ -11,6 +11,13 @@ const iban = ref('')
 const currency = ref('CHF')
 const balance = ref(0)
 
+// Reactive variables for the Edit Bank Account form
+const editingAccountId = ref(null)
+const editAccountName = ref('')
+const editIban = ref('')
+const editCurrency = ref('')
+const editBalance = ref(0)
+
 
 // READ BANK ACCOUNTS
 async function loadBankAccounts() {
@@ -59,6 +66,76 @@ async function createBankAccount() {
     await loadBankAccounts()
   }
 }
+
+// START EDIT BANK ACCOUNT
+function startEdit(account) {
+  // Store the ID of the bank account that is currently being edited
+  editingAccountId.value = account.id
+
+  // Copy the current bank account data into the Edit form
+  editAccountName.value = account.accountName
+  editIban.value = account.iban
+  editCurrency.value = account.currency
+  editBalance.value = account.balance
+}
+
+
+// UPDATE BANK ACCOUNT
+async function updateBankAccount(id) {
+  // Frontend sends a PUT request using the selected bank account ID
+  const response = await fetch(
+    `http://localhost:5106/api/bankaccounts/${id}`,
+    {
+      method: 'PUT',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      // Convert the updated bank account data into JSON
+      body: JSON.stringify({
+        accountName: editAccountName.value,
+        iban: editIban.value,
+        currency: editCurrency.value,
+        balance: editBalance.value,
+      }),
+    },
+  )
+
+  // Continue only if the update was successful
+  if (response.ok) {
+    // Close Edit mode
+    editingAccountId.value = null
+
+    // Reload bank accounts so the updated data appears immediately
+    await loadBankAccounts()
+  }
+}
+
+
+// CANCEL EDIT
+function cancelEdit() {
+  // null means that no bank account is currently being edited
+  editingAccountId.value = null
+}
+
+
+// DELETE BANK ACCOUNT
+async function deleteBankAccount(id) {
+  // Frontend sends a DELETE request using the selected bank account ID
+  const response = await fetch(
+    `http://localhost:5106/api/bankaccounts/${id}`,
+    {
+      method: 'DELETE',
+    },
+  )
+
+  // Reload bank accounts so the deleted account disappears immediately
+  if (response.ok) {
+    await loadBankAccounts()
+  }
+}
+
 
 // VUE LIFECYCLE
 // Load all bank accounts when this component is mounted
@@ -130,27 +207,103 @@ onMounted(() => {
       :key="account.id"
       class="mb-4"
     >
-      <v-card-title>
-        {{ account.accountName }}
-      </v-card-title>
 
-      <v-card-text>
-        <div>
-          User ID: {{ account.userId }}
-        </div>
+      <!-- NORMAL VIEW -->
+      <!-- Show this section when the bank account is not being edited -->
+      <template v-if="editingAccountId !== account.id">
+        <v-card-title>
+          {{ account.accountName }}
+        </v-card-title>
 
-        <div>
-          IBAN: {{ account.iban }}
-        </div>
+        <v-card-text>
+          <div>
+            User ID: {{ account.userId }}
+          </div>
 
-        <div>
-          Currency: {{ account.currency }}
-        </div>
+          <div>
+            IBAN: {{ account.iban }}
+          </div>
 
-        <div>
-          Balance: {{ account.balance }}
-        </div>
-      </v-card-text>
+          <div>
+            Currency: {{ account.currency }}
+          </div>
+
+          <div>
+            Balance: {{ account.balance }}
+          </div>
+        </v-card-text>
+
+        <v-card-actions>
+          <!-- Start Edit mode for this bank account -->
+          <v-btn
+            color="primary"
+            @click="startEdit(account)"
+          >
+            Edit
+          </v-btn>
+
+          <!-- Delete this bank account using account.id -->
+          <v-btn
+            color="error"
+            @click="deleteBankAccount(account.id)"
+          >
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </template>
+
+
+      <!-- EDIT VIEW -->
+      <!-- Show this section when the selected bank account is being edited -->
+      <template v-else>
+        <v-card-title>
+          Edit Bank Account
+        </v-card-title>
+
+        <v-card-text>
+          <!-- Edit Account Name -->
+          <v-text-field
+            v-model="editAccountName"
+            label="Account Name"
+          />
+
+          <!-- Edit IBAN -->
+          <v-text-field
+            v-model="editIban"
+            label="IBAN"
+          />
+
+          <!-- Edit Currency -->
+          <v-text-field
+            v-model="editCurrency"
+            label="Currency"
+          />
+
+          <!-- Edit Balance -->
+          <v-text-field
+            v-model.number="editBalance"
+            label="Balance"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <!-- Save the updated bank account -->
+          <v-btn
+            color="primary"
+            @click="updateBankAccount(account.id)"
+          >
+            Save
+          </v-btn>
+
+          <!-- Cancel Edit mode without saving -->
+          <v-btn
+            @click="cancelEdit"
+          >
+            Cancel
+          </v-btn>
+        </v-card-actions>
+      </template>
+
     </v-card>
   </v-container>
 </template>
