@@ -77,10 +77,14 @@ public class TransactionsController : ControllerBase
     public ActionResult<Transaction> CreateTransaction(
         Transaction newTransaction)
     {
-        // NEW VERSION:
-        // We do not manually create the Id anymore.
-        // SQLite / EF Core will generate the Id automatically.
+       var account = _context.BankAccounts
+        .FirstOrDefault(account =>
+            account.Id == newTransaction.BankAccountId);
 
+        if (account == null)
+        {
+            return NotFound("Bank account not found.");
+        }
         var taxCategoryService = new TaxCategoryService();
 
         newTransaction.SuggestedTaxCategory =

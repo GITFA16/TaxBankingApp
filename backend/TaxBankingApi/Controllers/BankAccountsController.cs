@@ -90,9 +90,13 @@ public class BankAccountsController : ControllerBase
         int userId,
         BankAccount newAccount)
     {
-        // NEW VERSION:
-        // We do not manually generate newAccount.Id anymore.
-        // EF Core / SQLite will generate the Id automatically.
+        var user = _context.Users
+        .FirstOrDefault(user => user.Id == userId);
+
+        if (user == null)
+        {
+        return NotFound("User not found.");
+        }
 
         newAccount.UserId = userId;
 
