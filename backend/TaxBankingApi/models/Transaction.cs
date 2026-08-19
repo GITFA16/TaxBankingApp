@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace TaxBankingApi.Models; //Group of the class Models
 
 public class Transaction
@@ -7,11 +8,11 @@ public class Transaction
     public int BankAccountId { get; set; }
 
     public DateTime BookingDate { get; set; }
-
+    [Required]
     public string Description { get; set; } = string.Empty; // here the tax catagory will be suggested
 
     public decimal Amount { get; set; }
-
+    [Required]
     public string Currency { get; set; } = "CHF";
 
     public string SuggestedTaxCategory { get; set; } = string.Empty;
