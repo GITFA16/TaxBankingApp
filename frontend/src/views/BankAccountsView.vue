@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue'
 const accounts = ref([])
 
 // Reactive variables for the Create Bank Account form
-const userId = ref('')
+const userId = ref(null)
 const accountName = ref('')
 const iban = ref('')
 const currency = ref('CHF')
@@ -49,7 +49,7 @@ async function createBankAccount() {
   // Continue only if the bank account was created successfully
   if (response.ok) {
     // Clear the Create Bank Account form
-    userId.value = ''
+    userId.value = null
     accountName.value = ''
     iban.value = ''
     currency.value = 'CHF'
@@ -59,7 +59,6 @@ async function createBankAccount() {
     await loadBankAccounts()
   }
 }
-
 
 // VUE LIFECYCLE
 // Load all bank accounts when this component is mounted
@@ -83,9 +82,8 @@ onMounted(() => {
       <v-card-text>
         <!-- User ID -->
         <v-text-field
-          v-model="userId"
+          v-model.number="userId"
           label="User ID"
-          type="number"
         />
 
         <!-- Account Name -->
@@ -108,9 +106,8 @@ onMounted(() => {
 
         <!-- Balance -->
         <v-text-field
-          v-model="balance"
+          v-model.number="balance"
           label="Balance"
-          type="number"
         />
       </v-card-text>
 

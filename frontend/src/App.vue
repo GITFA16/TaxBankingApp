@@ -7,6 +7,7 @@
     </v-app-bar>
 
     <v-main>
+       <!-- The active page from Vue Router will be displayed here -->
       <router-view />
     </v-main>
   </v-app>
