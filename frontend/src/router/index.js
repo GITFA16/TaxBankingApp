@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import UsersView from '../views/UsersView.vue'
 import BankAccountsView from '../views/BankAccountsView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
+import TaxSummaryView from '../views/TaxSummaryView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -29,6 +30,12 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView,
+    },
+
+    {
+      path: '/tax-summary',
+      name: 'tax-summary',
+      component: TaxSummaryView,
     },
     
   ],

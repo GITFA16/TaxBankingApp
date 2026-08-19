@@ -11,7 +11,9 @@ public class TaxCategoryService
             text.Contains("helsana") ||
             text.Contains("insurance") ||
             text.Contains("health") ||
+            text.Contains("krankenkasse") ||
             text.Contains("css"))
+
         {
             return "Krankenkasse";
         }
