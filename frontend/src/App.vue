@@ -1,11 +1,21 @@
-<script setup></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-</template>
+  <v-app>
+    <v-app-bar>
+      <v-app-bar-title>
+        Tax Banking App
+      </v-app-bar-title>
+    </v-app-bar>
 
-<style scoped></style>
+    <v-main>
+      <v-container>
+        <h1>TaxOra</h1>
+
+        <p>Tax Organizer</p>
+
+        <v-btn color="primary">
+          Test Button
+        </v-btn>
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
