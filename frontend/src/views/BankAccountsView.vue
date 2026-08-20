@@ -18,13 +18,32 @@ const editIban = ref('')
 const editCurrency = ref('')
 const editBalance = ref(0)
 
+// User ID used to filter bank accounts
+const selectedUserId = ref(null)
 
-// READ BANK ACCOUNTS
+
+// READ ALL BANK ACCOUNTS
 async function loadBankAccounts() {
   // Frontend sends a GET request to the backend API
-  const response = await fetch('http://localhost:5106/api/bankaccounts')
+  const response = await fetch(
+    'http://localhost:5106/api/bankaccounts',
+  )
 
   // Only update the list if the request was successful
+  if (response.ok) {
+    accounts.value = await response.json()
+  }
+}
+
+
+// READ BANK ACCOUNTS BY USER
+async function loadBankAccountsByUser() {
+  // Frontend sends a GET request for the selected user
+  const response = await fetch(
+    `http://localhost:5106/api/users/${selectedUserId.value}/accounts`,
+  )
+
+  // Store only the bank accounts that belong to this user
   if (response.ok) {
     accounts.value = await response.json()
   }
@@ -62,10 +81,11 @@ async function createBankAccount() {
     currency.value = 'CHF'
     balance.value = 0
 
-    // Reload bank accounts so the new account appears immediately
+    // Reload all bank accounts
     await loadBankAccounts()
   }
 }
+
 
 // START EDIT BANK ACCOUNT
 function startEdit(account) {
@@ -107,8 +127,12 @@ async function updateBankAccount(id) {
     // Close Edit mode
     editingAccountId.value = null
 
-    // Reload bank accounts so the updated data appears immediately
-    await loadBankAccounts()
+    // Reload the current filtered user if one is selected
+    if (selectedUserId.value !== null) {
+      await loadBankAccountsByUser()
+    } else {
+      await loadBankAccounts()
+    }
   }
 }
 
@@ -130,10 +154,24 @@ async function deleteBankAccount(id) {
     },
   )
 
-  // Reload bank accounts so the deleted account disappears immediately
+  // Reload the current filtered user if one is selected
   if (response.ok) {
-    await loadBankAccounts()
+    if (selectedUserId.value !== null) {
+      await loadBankAccountsByUser()
+    } else {
+      await loadBankAccounts()
+    }
   }
+}
+
+
+// SHOW ALL BANK ACCOUNTS
+async function showAllBankAccounts() {
+  // Clear the selected User ID
+  selectedUserId.value = null
+
+  // Load all bank accounts again
+  await loadBankAccounts()
 }
 
 
@@ -195,6 +233,39 @@ onMounted(() => {
           @click="createBankAccount"
         >
           Create Bank Account
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
+
+    <!-- FILTER BANK ACCOUNTS BY USER -->
+    <v-card class="mb-6">
+      <v-card-title>
+        Bank Accounts by User
+      </v-card-title>
+
+      <v-card-text>
+        <!-- User ID used for filtering -->
+        <v-text-field
+          v-model.number="selectedUserId"
+          label="User ID"
+        />
+      </v-card-text>
+
+      <v-card-actions>
+        <!-- Load only bank accounts that belong to the selected user -->
+        <v-btn
+          color="primary"
+          @click="loadBankAccountsByUser"
+        >
+          Load Bank Accounts
+        </v-btn>
+
+        <!-- Show all bank accounts again -->
+        <v-btn
+          @click="showAllBankAccounts"
+        >
+          Show All
         </v-btn>
       </v-card-actions>
     </v-card>
