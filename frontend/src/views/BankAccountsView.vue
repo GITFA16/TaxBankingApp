@@ -1,35 +1,73 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-// Reactive variable that stores the list of bank accounts
+// Stores all bank accounts
 const accounts = ref([])
 
-// Reactive variables for the Create Bank Account form
+// Stores all users for the dropdown
+const users = ref([])
+
+// Create Bank Account form
 const userId = ref(null)
 const accountName = ref('')
 const iban = ref('')
 const currency = ref('CHF')
 const balance = ref(0)
+const currencies = [
+  'CHF',
+  'USD',
+  'EUR',
+  'IDR',
+  'GBP',
+]
 
-// Reactive variables for the Edit Bank Account form
+// Edit Bank Account form
 const editingAccountId = ref(null)
 const editAccountName = ref('')
 const editIban = ref('')
 const editCurrency = ref('')
 const editBalance = ref(0)
 
-// User ID used to filter bank accounts
+// User used to filter bank accounts
 const selectedUserId = ref(null)
 
 
+// Create a Full Name for every user
+const userOptions = computed(() => {
+  return users.value.map(user => ({
+    id: user.id,
+    fullName: `${user.firstName} ${user.lastName}`,
+  }))
+})
+
+
+// READ ALL USERS
+async function loadUsers() {
+  const response = await fetch(
+    'http://localhost:5106/api/users',
+  )
+
+  if (response.ok) {
+    users.value = await response.json()
+  }
+}
+
+function getUserFullName(userId) {
+  const user = users.value.find(user => user.id === userId)
+
+  if (!user) {
+    return 'Unknown User'
+  }
+
+  return `${user.firstName} ${user.lastName}`
+}
+
 // READ ALL BANK ACCOUNTS
 async function loadBankAccounts() {
-  // Frontend sends a GET request to the backend API
   const response = await fetch(
     'http://localhost:5106/api/bankaccounts',
   )
 
-  // Only update the list if the request was successful
   if (response.ok) {
     accounts.value = await response.json()
   }
@@ -38,12 +76,14 @@ async function loadBankAccounts() {
 
 // READ BANK ACCOUNTS BY USER
 async function loadBankAccountsByUser() {
-  // Frontend sends a GET request for the selected user
+  if (selectedUserId.value === null) {
+    return
+  }
+
   const response = await fetch(
     `http://localhost:5106/api/users/${selectedUserId.value}/accounts`,
   )
 
-  // Store only the bank accounts that belong to this user
   if (response.ok) {
     accounts.value = await response.json()
   }
@@ -52,7 +92,10 @@ async function loadBankAccountsByUser() {
 
 // CREATE BANK ACCOUNT
 async function createBankAccount() {
-  // Frontend sends a POST request for the selected user
+  if (userId.value === null) {
+    return
+  }
+
   const response = await fetch(
     `http://localhost:5106/api/users/${userId.value}/accounts`,
     {
@@ -62,7 +105,6 @@ async function createBankAccount() {
         'Content-Type': 'application/json',
       },
 
-      // Convert the JavaScript object into JSON
       body: JSON.stringify({
         accountName: accountName.value,
         iban: iban.value,
@@ -72,16 +114,13 @@ async function createBankAccount() {
     },
   )
 
-  // Continue only if the bank account was created successfully
   if (response.ok) {
-    // Clear the Create Bank Account form
     userId.value = null
     accountName.value = ''
     iban.value = ''
     currency.value = 'CHF'
     balance.value = 0
 
-    // Reload all bank accounts
     await loadBankAccounts()
   }
 }
@@ -89,10 +128,8 @@ async function createBankAccount() {
 
 // START EDIT BANK ACCOUNT
 function startEdit(account) {
-  // Store the ID of the bank account that is currently being edited
   editingAccountId.value = account.id
 
-  // Copy the current bank account data into the Edit form
   editAccountName.value = account.accountName
   editIban.value = account.iban
   editCurrency.value = account.currency
@@ -102,7 +139,6 @@ function startEdit(account) {
 
 // UPDATE BANK ACCOUNT
 async function updateBankAccount(id) {
-  // Frontend sends a PUT request using the selected bank account ID
   const response = await fetch(
     `http://localhost:5106/api/bankaccounts/${id}`,
     {
@@ -112,7 +148,6 @@ async function updateBankAccount(id) {
         'Content-Type': 'application/json',
       },
 
-      // Convert the updated bank account data into JSON
       body: JSON.stringify({
         accountName: editAccountName.value,
         iban: editIban.value,
@@ -122,12 +157,9 @@ async function updateBankAccount(id) {
     },
   )
 
-  // Continue only if the update was successful
   if (response.ok) {
-    // Close Edit mode
     editingAccountId.value = null
 
-    // Reload the current filtered user if one is selected
     if (selectedUserId.value !== null) {
       await loadBankAccountsByUser()
     } else {
@@ -139,14 +171,12 @@ async function updateBankAccount(id) {
 
 // CANCEL EDIT
 function cancelEdit() {
-  // null means that no bank account is currently being edited
   editingAccountId.value = null
 }
 
 
 // DELETE BANK ACCOUNT
 async function deleteBankAccount(id) {
-  // Frontend sends a DELETE request using the selected bank account ID
   const response = await fetch(
     `http://localhost:5106/api/bankaccounts/${id}`,
     {
@@ -154,7 +184,6 @@ async function deleteBankAccount(id) {
     },
   )
 
-  // Reload the current filtered user if one is selected
   if (response.ok) {
     if (selectedUserId.value !== null) {
       await loadBankAccountsByUser()
@@ -167,17 +196,14 @@ async function deleteBankAccount(id) {
 
 // SHOW ALL BANK ACCOUNTS
 async function showAllBankAccounts() {
-  // Clear the selected User ID
   selectedUserId.value = null
 
-  // Load all bank accounts again
   await loadBankAccounts()
 }
 
-
-// VUE LIFECYCLE
-// Load all bank accounts when this component is mounted
+// Load users and bank accounts when page opens
 onMounted(() => {
+  loadUsers()
   loadBankAccounts()
 })
 </script>
@@ -187,18 +213,21 @@ onMounted(() => {
   <v-container>
     <h1>Bank Accounts</h1>
 
-
-    <!-- CREATE BANK ACCOUNT FORM -->
+    <!-- CREATE BANK ACCOUNT -->
     <v-card class="mb-6">
       <v-card-title>
         Create Bank Account
       </v-card-title>
 
       <v-card-text>
-        <!-- User ID -->
-        <v-text-field
-          v-model.number="userId"
-          label="User ID"
+
+        <!-- Select User by Full Name -->
+        <v-select
+          v-model="userId"
+          :items="userOptions"
+          item-title="fullName"
+          item-value="id"
+          label="User"
         />
 
         <!-- Account Name -->
@@ -214,9 +243,10 @@ onMounted(() => {
         />
 
         <!-- Currency -->
-        <v-text-field
-          v-model="currency"
-          label="Currency"
+        <v-select
+        v-model="currency"
+        :items="currencies"
+        label="Currency"
         />
 
         <!-- Balance -->
@@ -224,16 +254,18 @@ onMounted(() => {
           v-model.number="balance"
           label="Balance"
         />
+
       </v-card-text>
 
       <v-card-actions>
-        <!-- Calls createBankAccount() when clicked -->
+
         <v-btn
           color="primary"
           @click="createBankAccount"
         >
           Create Bank Account
         </v-btn>
+
       </v-card-actions>
     </v-card>
 
@@ -245,15 +277,20 @@ onMounted(() => {
       </v-card-title>
 
       <v-card-text>
-        <!-- User ID used for filtering -->
-        <v-text-field
-          v-model.number="selectedUserId"
-          label="User ID"
+
+        <!-- Select User by Full Name -->
+        <v-select
+          v-model="selectedUserId"
+          :items="userOptions"
+          item-title="fullName"
+          item-value="id"
+          label="User"
         />
+
       </v-card-text>
 
       <v-card-actions>
-        <!-- Load only bank accounts that belong to the selected user -->
+
         <v-btn
           color="primary"
           @click="loadBankAccountsByUser"
@@ -261,18 +298,17 @@ onMounted(() => {
           Load Bank Accounts
         </v-btn>
 
-        <!-- Show all bank accounts again -->
         <v-btn
           @click="showAllBankAccounts"
         >
           Show All
         </v-btn>
+
       </v-card-actions>
     </v-card>
 
 
-    <!-- READ / DISPLAY BANK ACCOUNTS -->
-    <!-- Create one card for every bank account -->
+    <!-- DISPLAY BANK ACCOUNTS -->
     <v-card
       v-for="account in accounts"
       :key="account.id"
@@ -280,15 +316,16 @@ onMounted(() => {
     >
 
       <!-- NORMAL VIEW -->
-      <!-- Show this section when the bank account is not being edited -->
       <template v-if="editingAccountId !== account.id">
+
         <v-card-title>
           {{ account.accountName }}
         </v-card-title>
 
         <v-card-text>
+
           <div>
-            User ID: {{ account.userId }}
+            User ID: {{ getUserFullName(account.userId) }}
           </div>
 
           <div>
@@ -302,10 +339,11 @@ onMounted(() => {
           <div>
             Balance: {{ account.balance }}
           </div>
+
         </v-card-text>
 
         <v-card-actions>
-          <!-- Start Edit mode for this bank account -->
+
           <v-btn
             color="primary"
             @click="startEdit(account)"
@@ -313,52 +351,52 @@ onMounted(() => {
             Edit
           </v-btn>
 
-          <!-- Delete this bank account using account.id -->
           <v-btn
             color="error"
             @click="deleteBankAccount(account.id)"
           >
             Delete
           </v-btn>
+
         </v-card-actions>
+
       </template>
 
 
       <!-- EDIT VIEW -->
-      <!-- Show this section when the selected bank account is being edited -->
       <template v-else>
+
         <v-card-title>
           Edit Bank Account
         </v-card-title>
 
         <v-card-text>
-          <!-- Edit Account Name -->
+
           <v-text-field
             v-model="editAccountName"
             label="Account Name"
           />
 
-          <!-- Edit IBAN -->
           <v-text-field
             v-model="editIban"
             label="IBAN"
           />
 
-          <!-- Edit Currency -->
-          <v-text-field
-            v-model="editCurrency"
-            label="Currency"
+          <v-select
+           v-model="editCurrency"
+           :items="currencies"
+           label="Currency"
           />
 
-          <!-- Edit Balance -->
           <v-text-field
             v-model.number="editBalance"
             label="Balance"
           />
+
         </v-card-text>
 
         <v-card-actions>
-          <!-- Save the updated bank account -->
+
           <v-btn
             color="primary"
             @click="updateBankAccount(account.id)"
@@ -366,15 +404,17 @@ onMounted(() => {
             Save
           </v-btn>
 
-          <!-- Cancel Edit mode without saving -->
           <v-btn
             @click="cancelEdit"
           >
             Cancel
           </v-btn>
+
         </v-card-actions>
+
       </template>
 
     </v-card>
+
   </v-container>
 </template>
