@@ -1,11 +1,14 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-// Stores all transactions that will be displayed
+// Stores all transactions
 const transactions = ref([])
 
-// Stores all bank accounts for dropdown selection
+// Stores all bank accounts
 const bankAccounts = ref([])
+
+// Stores all users
+const users = ref([])
 
 // Create Transaction form
 const bankAccountId = ref(null)
@@ -34,6 +37,27 @@ const currencies = [
   'GBP',
 ]
 
+// Creates a display name for every bank account
+// Example: Private Account (Faizal Alamudi)
+const bankAccountOptions = computed(() => {
+  return bankAccounts.value.map(account => {
+    // Find the owner of the bank account
+    const user = users.value.find(
+      user => user.id === account.userId,
+    )
+
+    // Create Full Name if the user exists
+    const ownerName = user
+      ? `${user.firstName} ${user.lastName}`
+      : 'Unknown User'
+
+    return {
+      id: account.id,
+      displayName: `${account.accountName} (${ownerName})`,
+    }
+  })
+})
+
 // Load all transactions
 async function loadTransactions() {
   const response = await fetch(
@@ -53,6 +77,17 @@ async function loadBankAccounts() {
 
   if (response.ok) {
     bankAccounts.value = await response.json()
+  }
+}
+
+// Load all users
+async function loadUsers() {
+  const response = await fetch(
+    'http://localhost:5106/api/users',
+  )
+
+  if (response.ok) {
+    users.value = await response.json()
   }
 }
 
@@ -104,12 +139,14 @@ async function createTransaction() {
   )
 
   if (response.ok) {
+    // Clear Create Transaction form
     bankAccountId.value = null
     bookingDate.value = ''
     description.value = ''
     amount.value = 0
     currency.value = 'CHF'
 
+    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -153,6 +190,7 @@ async function updateTransaction(id) {
   if (response.ok) {
     editingTransactionId.value = null
 
+    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -176,6 +214,7 @@ async function deleteTransaction(id) {
   )
 
   if (response.ok) {
+    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -184,7 +223,7 @@ async function deleteTransaction(id) {
   }
 }
 
-// Get the Bank Account name from the Bank Account ID
+// Get Bank Account name from Bank Account ID
 function getBankAccountName(bankAccountId) {
   const account = bankAccounts.value.find(
     account => account.id === bankAccountId,
@@ -197,10 +236,34 @@ function getBankAccountName(bankAccountId) {
   return account.accountName
 }
 
-// Load transactions and bank accounts when the page is opened
+// Get Bank Account owner from Bank Account ID
+function getBankAccountOwner(bankAccountId) {
+  // Find the bank account
+  const account = bankAccounts.value.find(
+    account => account.id === bankAccountId,
+  )
+
+  if (!account) {
+    return 'Unknown User'
+  }
+
+  // Find the user who owns the bank account
+  const user = users.value.find(
+    user => user.id === account.userId,
+  )
+
+  if (!user) {
+    return 'Unknown User'
+  }
+
+  return `${user.firstName} ${user.lastName}`
+}
+
+// Load all required data when the page is opened
 onMounted(() => {
   loadTransactions()
   loadBankAccounts()
+  loadUsers()
 })
 </script>
 
@@ -217,11 +280,11 @@ onMounted(() => {
 
       <v-card-text>
 
-        <!-- Select Bank Account by name -->
+        <!-- Select Bank Account with Owner -->
         <v-select
           v-model="bankAccountId"
-          :items="bankAccounts"
-          item-title="accountName"
+          :items="bankAccountOptions"
+          item-title="displayName"
           item-value="id"
           label="Bank Account"
         />
@@ -275,11 +338,11 @@ onMounted(() => {
 
       <v-card-text>
 
-        <!-- Select Bank Account by name -->
+        <!-- Select Bank Account with Owner -->
         <v-select
           v-model="selectedBankAccountId"
-          :items="bankAccounts"
-          item-title="accountName"
+          :items="bankAccountOptions"
+          item-title="displayName"
           item-value="id"
           label="Bank Account"
         />
@@ -322,7 +385,13 @@ onMounted(() => {
         <v-card-text>
 
           <div>
-            Transaction ID: {{ transaction.id }}
+            Transaction ID:
+            {{ transaction.id }}
+          </div>
+
+          <div>
+            Owner:
+            {{ getBankAccountOwner(transaction.bankAccountId) }}
           </div>
 
           <div>
@@ -378,11 +447,11 @@ onMounted(() => {
 
         <v-card-text>
 
-          <!-- Select Bank Account by name -->
+          <!-- Select Bank Account with Owner -->
           <v-select
             v-model="editBankAccountId"
-            :items="bankAccounts"
-            item-title="accountName"
+            :items="bankAccountOptions"
+            item-title="displayName"
             item-value="id"
             label="Bank Account"
           />

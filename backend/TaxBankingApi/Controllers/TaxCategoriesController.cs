@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TaxBankingApi.Data;
 using TaxBankingApi.Models;
 
 namespace TaxBankingApi.Controllers;
@@ -7,75 +9,98 @@ namespace TaxBankingApi.Controllers;
 [Route("api/[controller]")]
 public class TaxCategoriesController : ControllerBase
 {
-    // Tax categories are standard reference data.
-    // They are read-only and cannot be created, updated, or deleted by the user.
-    // static = one shared list for the application
-    // readonly = the list reference cannot be replaced
-    private static readonly List<TaxCategory> categories = new()
+    private readonly AppDbContext _context;
+
+    public TaxCategoriesController(AppDbContext context)
     {
-        new TaxCategory
-        {
-            Id = 1,
-            Name = "Health Insurance / Krankenkasse",
-            Description = "Health insurance expenses"
-        },
-
-        new TaxCategory
-        {
-            Id = 2,
-            Name = "Education / Weiterbildung",
-            Description = "Education and professional training expenses"
-        },
-
-        new TaxCategory
-        {
-            Id = 3,
-            Name = "Charity / Spenden",
-            Description = "Charitable donations"
-        },
-
-        new TaxCategory
-        {
-            Id = 4,
-            Name = "Pension / Vorsorge 3a",
-            Description = "Pillar 3a retirement contributions"
-        },
-
-        new TaxCategory
-        {
-            Id = 5,
-            Name = "Mortgage Interest / Hypothekenzinsen",
-            Description = "Interest paid on mortgage loans"
-        },
-
-        new TaxCategory
-        {
-            Id = 6,
-            Name = "Childcare / Kinderbetreuung",
-            Description = "Expenses related to childcare services"
-        },
-
-        new TaxCategory
-        {
-            Id = 7,
-            Name = "Public Transportation / Öffentlicher Verkehr",
-            Description = "Expenses related to public transportation"
-        },
-
-        new TaxCategory
-        {
-            Id = 8,
-            Name = "Professional Expenses / Professionelle Auslagen",
-            Description = "Expenses related to professional work"
-        }
-    };
+        _context = context;
+    }
 
 
-    // READ ALL STANDARD TAX CATEGORIES
+    // READ ALL TAX CATEGORIES
     // GET /api/taxcategories
     [HttpGet]
-    public ActionResult<IEnumerable<TaxCategory>> GetTaxCategories()
+    public async Task<ActionResult<IEnumerable<TaxCategory>>> GetTaxCategories()
     {
+        var categories = await _context.TaxCategories.ToListAsync();
+
         return Ok(categories);
+    }
+
+
+    // READ ONE TAX CATEGORY
+    // GET /api/taxcategories/1
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TaxCategory>> GetTaxCategory(int id)
+    {
+        var category = await _context.TaxCategories.FindAsync(id);
+
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(category);
+    }
+
+
+    // CREATE TAX CATEGORY
+    // POST /api/taxcategories
+    [HttpPost]
+    public async Task<ActionResult<TaxCategory>> CreateTaxCategory(
+        TaxCategory category)
+    {
+        _context.TaxCategories.Add(category);
+
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(
+            nameof(GetTaxCategory),
+            new { id = category.Id },
+            category
+        );
+    }
+
+
+    // UPDATE TAX CATEGORY
+    // PUT /api/taxcategories/1
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTaxCategory(
+        int id,
+        TaxCategory updatedCategory)
+    {
+        var category = await _context.TaxCategories.FindAsync(id);
+
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        category.Name = updatedCategory.Name;
+        category.Description = updatedCategory.Description;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(category);
+    }
+
+
+    // DELETE TAX CATEGORY
+    // DELETE /api/taxcategories/1
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTaxCategory(int id)
+    {
+        var category = await _context.TaxCategories.FindAsync(id);
+
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        _context.TaxCategories.Remove(category);
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
