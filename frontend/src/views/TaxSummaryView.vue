@@ -1,8 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-// User ID used to request the tax summary
-const userId = ref(null)
+// Stores all users for the dropdown
+const users = ref([])
+
+// Stores the selected User ID internally
+const selectedUserId = ref(null)
 
 // Stores the tax summary returned by the backend
 const taxSummary = ref({})
@@ -11,21 +14,63 @@ const taxSummary = ref({})
 const loading = ref(false)
 
 
-// LOAD TAX SUMMARY
-async function loadTaxSummary() {
-  loading.value = true
+// USER OPTIONS
+// Creates a Full Name for every user
+// Example:
+// id: 1
+// fullName: Faizal Alamudi
+const userOptions = computed(() => {
+  return users.value.map(user => ({
+    id: user.id,
+    fullName: `${user.firstName} ${user.lastName}`,
+  }))
+})
 
-  // Frontend sends a GET request to the backend API
+
+// LOAD ALL USERS
+async function loadUsers() {
+  // Frontend sends a GET request to load all users
   const response = await fetch(
-    `http://localhost:5106/api/users/${userId.value}/tax-summary`,
+    'http://localhost:5106/api/users',
   )
 
+  // Store users if the request was successful
+  if (response.ok) {
+    users.value = await response.json()
+  }
+}
+
+
+// LOAD TAX SUMMARY
+async function loadTaxSummary() {
+  // Do nothing if no user was selected
+  if (selectedUserId.value === null) {
+    return
+  }
+
+  // Show loading animation
+  loading.value = true
+
+  // Frontend sends a GET request for the selected user
+  const response = await fetch(
+    `http://localhost:5106/api/users/${selectedUserId.value}/tax-summary`,
+  )
+
+  // Store the tax summary returned by the backend
   if (response.ok) {
     taxSummary.value = await response.json()
   }
 
+  // Stop loading animation
   loading.value = false
 }
+
+
+// VUE LIFECYCLE
+// Load all users when this page is opened
+onMounted(() => {
+  loadUsers()
+})
 </script>
 
 
@@ -41,14 +86,20 @@ async function loadTaxSummary() {
       </v-card-title>
 
       <v-card-text>
-        <!-- User ID -->
-        <v-text-field
-          v-model.number="userId"
-          label="User ID"
+
+        <!-- Select User by Full Name -->
+        <v-select
+          v-model="selectedUserId"
+          :items="userOptions"
+          item-title="fullName"
+          item-value="id"
+          label="User"
         />
+
       </v-card-text>
 
       <v-card-actions>
+
         <!-- Load the tax summary for the selected user -->
         <v-btn
           color="primary"
@@ -57,6 +108,7 @@ async function loadTaxSummary() {
         >
           Load Tax Summary
         </v-btn>
+
       </v-card-actions>
     </v-card>
 
@@ -68,6 +120,7 @@ async function loadTaxSummary() {
       </v-card-title>
 
       <v-card-text>
+
         <!-- Create one row for every tax category -->
         <div
           v-for="(total, category) in taxSummary"
@@ -87,7 +140,9 @@ async function loadTaxSummary() {
         <div v-if="Object.keys(taxSummary).length === 0">
           No tax-relevant transactions found.
         </div>
+
       </v-card-text>
     </v-card>
+
   </v-container>
 </template>

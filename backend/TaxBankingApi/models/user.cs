@@ -3,7 +3,7 @@ namespace TaxBankingApi.Models //use for the group name of the class
 
 
 {
-    public class User  //class name
+    public class User 
     {
         public int Id { get; set; }  //integer for ID ; get: Read and set: change
         [Required]

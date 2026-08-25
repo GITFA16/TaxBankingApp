@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue'
 // REACTIVE VARIABLES
 // Stores all transactions that will be displayed
 const transactions = ref([])
+const bankAccounts = ref([])
 
 // CREATE TRANSACTION FORM
 const bankAccountId = ref(null)
@@ -186,12 +187,23 @@ async function deleteTransaction(id) {
       await loadTransactions()
     }
   }
+  // Load all bank accounts from backend
+  async function loadBankAccounts() {
+    const response = await fetch(
+      'http://localhost:5106/api/bankaccounts',
+    )
+
+    if (response.ok) {
+      bankAccounts.value = await response.json()
+    }
+  }
 }
 
 // VUE LIFECYCLE
 // Load all transactions when the page is opened
 onMounted(() => {
   loadTransactions()
+  loadBankAccounts()
 })
 </script>
 
@@ -210,9 +222,12 @@ onMounted(() => {
       <v-card-text>
 
         <!-- Bank Account ID -->
-        <v-text-field
-          v-model.number="bankAccountId"
-          label="Bank Account ID"
+        <v-select
+          v-model="bankAccountId"
+          :items="bankAccounts"
+          item-title="accountName"
+          item-value="id"
+          label="Bank Account"
         />
 
         <!-- Booking Date -->
@@ -265,9 +280,12 @@ onMounted(() => {
       <v-card-text>
 
         <!-- Bank Account ID used for filtering -->
-        <v-text-field
-          v-model.number="selectedBankAccountId"
-          label="Bank Account ID"
+        <v-select
+          v-model="selectedBankAccountId"
+          :items="bankAccounts"
+          item-title="accountName"
+          item-value="id"
+          label="Bank Account"
         />
 
       </v-card-text>
