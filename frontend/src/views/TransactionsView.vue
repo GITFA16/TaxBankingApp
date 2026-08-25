@@ -1,75 +1,89 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 
-// REACTIVE VARIABLES
 // Stores all transactions that will be displayed
 const transactions = ref([])
+
+// Stores all bank accounts for dropdown selection
 const bankAccounts = ref([])
 
-// CREATE TRANSACTION FORM
+// Create Transaction form
 const bankAccountId = ref(null)
 const bookingDate = ref('')
 const description = ref('')
 const amount = ref(0)
 const currency = ref('CHF')
 
-// EDIT TRANSACTION FORM
+// Edit Transaction form
 const editingTransactionId = ref(null)
-
 const editBankAccountId = ref(null)
 const editBookingDate = ref('')
 const editDescription = ref('')
 const editAmount = ref(0)
 const editCurrency = ref('CHF')
 
-
-// FILTER TRANSACTIONS BY BANK ACCOUNT
-// Stores the Bank Account ID that is used for filtering
+// Bank Account used to filter transactions
 const selectedBankAccountId = ref(null)
 
-// READ ALL TRANSACTIONS
+// Currency options
+const currencies = [
+  'CHF',
+  'USD',
+  'EUR',
+  'IDR',
+  'GBP',
+]
+
+// Load all transactions
 async function loadTransactions() {
-  // Send GET request to backend
   const response = await fetch(
     'http://localhost:5106/api/transactions',
   )
 
-  // Only update the list if backend responds successfully
   if (response.ok) {
     transactions.value = await response.json()
   }
 }
 
-// READ TRANSACTIONS BY BANK ACCOUNT
+// Load all bank accounts
+async function loadBankAccounts() {
+  const response = await fetch(
+    'http://localhost:5106/api/bankaccounts',
+  )
+
+  if (response.ok) {
+    bankAccounts.value = await response.json()
+  }
+}
+
+// Load transactions by selected bank account
 async function loadTransactionsByBankAccount() {
-  // Do nothing if no Bank Account ID was entered
   if (selectedBankAccountId.value === null) {
     return
   }
 
-  // Send GET request for one specific Bank Account
   const response = await fetch(
     `http://localhost:5106/api/bankaccounts/${selectedBankAccountId.value}/transactions`,
   )
 
-  // Store only transactions that belong to this Bank Account
   if (response.ok) {
     transactions.value = await response.json()
   }
 }
 
-// SHOW ALL TRANSACTIONS
+// Show all transactions again
 async function showAllTransactions() {
-  // Remove the filter
   selectedBankAccountId.value = null
 
-  // Load all transactions again
   await loadTransactions()
 }
 
-// CREATE TRANSACTION
+// Create a new transaction
 async function createTransaction() {
-  // Send POST request to backend
+  if (bankAccountId.value === null) {
+    return
+  }
+
   const response = await fetch(
     'http://localhost:5106/api/transactions',
     {
@@ -79,7 +93,6 @@ async function createTransaction() {
         'Content-Type': 'application/json',
       },
 
-      // Convert JavaScript object into JSON
       body: JSON.stringify({
         bankAccountId: bankAccountId.value,
         bookingDate: bookingDate.value,
@@ -90,17 +103,13 @@ async function createTransaction() {
     },
   )
 
-  // Continue only if transaction was created successfully
   if (response.ok) {
-    // Clear Create Transaction form
     bankAccountId.value = null
     bookingDate.value = ''
     description.value = ''
     amount.value = 0
     currency.value = 'CHF'
 
-    // If a Bank Account filter is active,
-    // reload only transactions for that Bank Account
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -109,25 +118,19 @@ async function createTransaction() {
   }
 }
 
-// START EDIT TRANSACTION
+// Start Edit mode
 function startEdit(transaction) {
-  // Store the ID of the transaction that is currently being edited
   editingTransactionId.value = transaction.id
 
-  // Copy current transaction data into the Edit form
   editBankAccountId.value = transaction.bankAccountId
-
-  // Convert date to YYYY-MM-DD for HTML date input
   editBookingDate.value = transaction.bookingDate.substring(0, 10)
-
   editDescription.value = transaction.description
   editAmount.value = transaction.amount
   editCurrency.value = transaction.currency
 }
 
-// UPDATE TRANSACTION
+// Update an existing transaction
 async function updateTransaction(id) {
-  // Send PUT request to backend
   const response = await fetch(
     `http://localhost:5106/api/transactions/${id}`,
     {
@@ -137,7 +140,6 @@ async function updateTransaction(id) {
         'Content-Type': 'application/json',
       },
 
-      // Send updated transaction data
       body: JSON.stringify({
         bankAccountId: editBankAccountId.value,
         bookingDate: editBookingDate.value,
@@ -148,12 +150,9 @@ async function updateTransaction(id) {
     },
   )
 
-  // Continue only if update was successful
   if (response.ok) {
-    // Close Edit mode
     editingTransactionId.value = null
 
-    // Keep current filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -162,15 +161,13 @@ async function updateTransaction(id) {
   }
 }
 
-// CANCEL EDIT
+// Cancel Edit mode
 function cancelEdit() {
-  // null means no transaction is currently being edited
   editingTransactionId.value = null
 }
 
-// DELETE TRANSACTION
+// Delete a transaction
 async function deleteTransaction(id) {
-  // Send DELETE request to backend
   const response = await fetch(
     `http://localhost:5106/api/transactions/${id}`,
     {
@@ -178,29 +175,29 @@ async function deleteTransaction(id) {
     },
   )
 
-  // Continue only if delete was successful
   if (response.ok) {
-    // Keep current filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
       await loadTransactions()
     }
   }
-  // Load all bank accounts from backend
-  async function loadBankAccounts() {
-    const response = await fetch(
-      'http://localhost:5106/api/bankaccounts',
-    )
-
-    if (response.ok) {
-      bankAccounts.value = await response.json()
-    }
-  }
 }
 
-// VUE LIFECYCLE
-// Load all transactions when the page is opened
+// Get the Bank Account name from the Bank Account ID
+function getBankAccountName(bankAccountId) {
+  const account = bankAccounts.value.find(
+    account => account.id === bankAccountId,
+  )
+
+  if (!account) {
+    return 'Unknown Bank Account'
+  }
+
+  return account.accountName
+}
+
+// Load transactions and bank accounts when the page is opened
 onMounted(() => {
   loadTransactions()
   loadBankAccounts()
@@ -212,8 +209,7 @@ onMounted(() => {
   <v-container>
     <h1>Transactions</h1>
 
-    <!-- CREATE TRANSACTION FORM -->
-  
+    <!-- Create Transaction Form -->
     <v-card class="mb-6">
       <v-card-title>
         Create Transaction
@@ -221,7 +217,7 @@ onMounted(() => {
 
       <v-card-text>
 
-        <!-- Bank Account ID -->
+        <!-- Select Bank Account by name -->
         <v-select
           v-model="bankAccountId"
           :items="bankAccounts"
@@ -250,8 +246,9 @@ onMounted(() => {
         />
 
         <!-- Currency -->
-        <v-text-field
+        <v-select
           v-model="currency"
+          :items="currencies"
           label="Currency"
         />
 
@@ -259,7 +256,6 @@ onMounted(() => {
 
       <v-card-actions>
 
-        <!-- Create new transaction -->
         <v-btn
           color="primary"
           @click="createTransaction"
@@ -270,8 +266,8 @@ onMounted(() => {
       </v-card-actions>
     </v-card>
 
-    <!-- FILTER TRANSACTIONS BY BANK ACCOUNT -->
 
+    <!-- Filter Transactions by Bank Account -->
     <v-card class="mb-6">
       <v-card-title>
         Transactions by Bank Account
@@ -279,7 +275,7 @@ onMounted(() => {
 
       <v-card-text>
 
-        <!-- Bank Account ID used for filtering -->
+        <!-- Select Bank Account by name -->
         <v-select
           v-model="selectedBankAccountId"
           :items="bankAccounts"
@@ -292,7 +288,6 @@ onMounted(() => {
 
       <v-card-actions>
 
-        <!-- Load transactions for one Bank Account -->
         <v-btn
           color="primary"
           @click="loadTransactionsByBankAccount"
@@ -300,7 +295,6 @@ onMounted(() => {
           Load Transactions
         </v-btn>
 
-        <!-- Remove filter and show everything -->
         <v-btn
           @click="showAllTransactions"
         >
@@ -310,16 +304,15 @@ onMounted(() => {
       </v-card-actions>
     </v-card>
 
-    <!-- READ / DISPLAY TRANSACTIONS -->
 
+    <!-- Display Transactions -->
     <v-card
       v-for="transaction in transactions"
       :key="transaction.id"
       class="mb-4"
     >
 
-      <!-- NORMAL VIEW -->
-
+      <!-- Normal View -->
       <template v-if="editingTransactionId !== transaction.id">
 
         <v-card-title>
@@ -333,11 +326,13 @@ onMounted(() => {
           </div>
 
           <div>
-            Bank Account ID: {{ transaction.bankAccountId }}
+            Bank Account:
+            {{ getBankAccountName(transaction.bankAccountId) }}
           </div>
 
           <div>
-            Booking Date: {{ transaction.bookingDate.substring(0, 10) }}
+            Booking Date:
+            {{ transaction.bookingDate.substring(0, 10) }}
           </div>
 
           <div>
@@ -355,7 +350,6 @@ onMounted(() => {
 
         <v-card-actions>
 
-          <!-- Open Edit mode -->
           <v-btn
             color="primary"
             @click="startEdit(transaction)"
@@ -363,7 +357,6 @@ onMounted(() => {
             Edit
           </v-btn>
 
-          <!-- Delete transaction -->
           <v-btn
             color="error"
             @click="deleteTransaction(transaction.id)"
@@ -372,10 +365,11 @@ onMounted(() => {
           </v-btn>
 
         </v-card-actions>
+
       </template>
 
-      <!-- EDIT VIEW -->
 
+      <!-- Edit View -->
       <template v-else>
 
         <v-card-title>
@@ -384,10 +378,13 @@ onMounted(() => {
 
         <v-card-text>
 
-          <!-- Edit Bank Account ID -->
-          <v-text-field
-            v-model.number="editBankAccountId"
-            label="Bank Account ID"
+          <!-- Select Bank Account by name -->
+          <v-select
+            v-model="editBankAccountId"
+            :items="bankAccounts"
+            item-title="accountName"
+            item-value="id"
+            label="Bank Account"
           />
 
           <!-- Edit Booking Date -->
@@ -410,8 +407,9 @@ onMounted(() => {
           />
 
           <!-- Edit Currency -->
-          <v-text-field
+          <v-select
             v-model="editCurrency"
+            :items="currencies"
             label="Currency"
           />
 
@@ -419,7 +417,6 @@ onMounted(() => {
 
         <v-card-actions>
 
-          <!-- Save updated transaction -->
           <v-btn
             color="primary"
             @click="updateTransaction(transaction.id)"
@@ -427,7 +424,6 @@ onMounted(() => {
             Save
           </v-btn>
 
-          <!-- Cancel editing -->
           <v-btn
             @click="cancelEdit"
           >
