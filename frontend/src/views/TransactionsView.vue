@@ -28,6 +28,9 @@ const editCurrency = ref('CHF')
 // Bank Account used to filter transactions
 const selectedBankAccountId = ref(null)
 
+// Error message for simple validation
+const errorMessage = ref('')
+
 // Currency options
 const currencies = [
   'CHF',
@@ -115,7 +118,22 @@ async function showAllTransactions() {
 
 // Create a new transaction
 async function createTransaction() {
+  // Clear previous error message
+  errorMessage.value = ''
+
+  // Minimal validation
   if (bankAccountId.value === null) {
+    errorMessage.value = 'Please select a Bank Account.'
+    return
+  }
+
+  if (bookingDate.value === '') {
+    errorMessage.value = 'Please select a Booking Date.'
+    return
+  }
+
+  if (description.value.trim() === '') {
+    errorMessage.value = 'Please enter a Description.'
     return
   }
 
@@ -146,12 +164,17 @@ async function createTransaction() {
     amount.value = 0
     currency.value = 'CHF'
 
+    // Clear error message
+    errorMessage.value = ''
+
     // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
       await loadTransactions()
     }
+  } else {
+    errorMessage.value = 'Transaction could not be created.'
   }
 }
 
@@ -271,6 +294,15 @@ onMounted(() => {
 <template>
   <v-container>
     <h1>Transactions</h1>
+
+    <!-- Error Message -->
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      class="mb-4"
+    >
+      {{ errorMessage }}
+    </v-alert>
 
     <!-- Create Transaction Form -->
     <v-card class="mb-6">

@@ -16,9 +16,7 @@ public class TaxCategoriesController : ControllerBase
         _context = context;
     }
 
-
     // READ ALL TAX CATEGORIES
-    // GET /api/taxcategories
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TaxCategory>>> GetTaxCategories()
     {
@@ -27,9 +25,7 @@ public class TaxCategoriesController : ControllerBase
         return Ok(categories);
     }
 
-
     // READ ONE TAX CATEGORY
-    // GET /api/taxcategories/1
     [HttpGet("{id}")]
     public async Task<ActionResult<TaxCategory>> GetTaxCategory(int id)
     {
@@ -43,9 +39,7 @@ public class TaxCategoriesController : ControllerBase
         return Ok(category);
     }
 
-
     // CREATE TAX CATEGORY
-    // POST /api/taxcategories
     [HttpPost]
     public async Task<ActionResult<TaxCategory>> CreateTaxCategory(
         TaxCategory category)
@@ -61,9 +55,7 @@ public class TaxCategoriesController : ControllerBase
         );
     }
 
-
     // UPDATE TAX CATEGORY
-    // PUT /api/taxcategories/1
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateTaxCategory(
         int id,
@@ -84,9 +76,7 @@ public class TaxCategoriesController : ControllerBase
         return Ok(category);
     }
 
-
     // DELETE TAX CATEGORY
-    // DELETE /api/taxcategories/1
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTaxCategory(int id)
     {
