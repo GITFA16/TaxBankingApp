@@ -40,16 +40,23 @@ const currencies = [
   'GBP',
 ]
 
+// Basic Authentication header
+function getAuthHeader() {
+  const auth = localStorage.getItem('taxoraAuth')
+
+  return {
+    Authorization: `Basic ${auth}`,
+  }
+}
+
 // Creates a display name for every bank account
 // Example: Private Account (Faizal Alamudi)
 const bankAccountOptions = computed(() => {
   return bankAccounts.value.map(account => {
-    // Find the owner of the bank account
     const user = users.value.find(
       user => user.id === account.userId,
     )
 
-    // Create Full Name if the user exists
     const ownerName = user
       ? `${user.firstName} ${user.lastName}`
       : 'Unknown User'
@@ -65,6 +72,9 @@ const bankAccountOptions = computed(() => {
 async function loadTransactions() {
   const response = await fetch(
     'http://localhost:5106/api/transactions',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -76,6 +86,9 @@ async function loadTransactions() {
 async function loadBankAccounts() {
   const response = await fetch(
     'http://localhost:5106/api/bankaccounts',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -87,6 +100,9 @@ async function loadBankAccounts() {
 async function loadUsers() {
   const response = await fetch(
     'http://localhost:5106/api/users',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -102,6 +118,9 @@ async function loadTransactionsByBankAccount() {
 
   const response = await fetch(
     `http://localhost:5106/api/bankaccounts/${selectedBankAccountId.value}/transactions`,
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -118,10 +137,8 @@ async function showAllTransactions() {
 
 // Create a new transaction
 async function createTransaction() {
-  // Clear previous error message
   errorMessage.value = ''
 
-  // Minimal validation
   if (bankAccountId.value === null) {
     errorMessage.value = 'Please select a Bank Account.'
     return
@@ -143,6 +160,7 @@ async function createTransaction() {
       method: 'POST',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -157,17 +175,14 @@ async function createTransaction() {
   )
 
   if (response.ok) {
-    // Clear Create Transaction form
     bankAccountId.value = null
     bookingDate.value = ''
     description.value = ''
     amount.value = 0
     currency.value = 'CHF'
 
-    // Clear error message
     errorMessage.value = ''
 
-    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -197,6 +212,7 @@ async function updateTransaction(id) {
       method: 'PUT',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -213,7 +229,6 @@ async function updateTransaction(id) {
   if (response.ok) {
     editingTransactionId.value = null
 
-    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -233,11 +248,11 @@ async function deleteTransaction(id) {
     `http://localhost:5106/api/transactions/${id}`,
     {
       method: 'DELETE',
+      headers: getAuthHeader(),
     },
   )
 
   if (response.ok) {
-    // Keep filter if one is active
     if (selectedBankAccountId.value !== null) {
       await loadTransactionsByBankAccount()
     } else {
@@ -261,7 +276,6 @@ function getBankAccountName(bankAccountId) {
 
 // Get Bank Account owner from Bank Account ID
 function getBankAccountOwner(bankAccountId) {
-  // Find the bank account
   const account = bankAccounts.value.find(
     account => account.id === bankAccountId,
   )
@@ -270,7 +284,6 @@ function getBankAccountOwner(bankAccountId) {
     return 'Unknown User'
   }
 
-  // Find the user who owns the bank account
   const user = users.value.find(
     user => user.id === account.userId,
   )
@@ -289,7 +302,6 @@ onMounted(() => {
   loadUsers()
 })
 </script>
-
 
 <template>
   <v-container>

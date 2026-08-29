@@ -13,6 +13,7 @@ const accountName = ref('')
 const iban = ref('')
 const currency = ref('CHF')
 const balance = ref(0)
+
 const currencies = [
   'CHF',
   'USD',
@@ -32,6 +33,16 @@ const editBalance = ref(0)
 const selectedUserId = ref(null)
 
 
+// BASIC AUTH HEADER
+function getAuthHeader() {
+  const auth = localStorage.getItem('taxoraAuth')
+
+  return {
+    Authorization: `Basic ${auth}`,
+  }
+}
+
+
 // Create a Full Name for every user
 const userOptions = computed(() => {
   return users.value.map(user => ({
@@ -45,12 +56,16 @@ const userOptions = computed(() => {
 async function loadUsers() {
   const response = await fetch(
     'http://localhost:5106/api/users',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
     users.value = await response.json()
   }
 }
+
 
 function getUserFullName(userId) {
   const user = users.value.find(user => user.id === userId)
@@ -62,10 +77,14 @@ function getUserFullName(userId) {
   return `${user.firstName} ${user.lastName}`
 }
 
+
 // READ ALL BANK ACCOUNTS
 async function loadBankAccounts() {
   const response = await fetch(
     'http://localhost:5106/api/bankaccounts',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -82,6 +101,9 @@ async function loadBankAccountsByUser() {
 
   const response = await fetch(
     `http://localhost:5106/api/users/${selectedUserId.value}/accounts`,
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -102,6 +124,7 @@ async function createBankAccount() {
       method: 'POST',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -145,6 +168,7 @@ async function updateBankAccount(id) {
       method: 'PUT',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -181,6 +205,7 @@ async function deleteBankAccount(id) {
     `http://localhost:5106/api/bankaccounts/${id}`,
     {
       method: 'DELETE',
+      headers: getAuthHeader(),
     },
   )
 
@@ -200,6 +225,7 @@ async function showAllBankAccounts() {
 
   await loadBankAccounts()
 }
+
 
 // Load users and bank accounts when page opens
 onMounted(() => {

@@ -19,7 +19,12 @@ const editEmail = ref('')
 // READ USERS
 async function loadUsers() {
   // Frontend sends a GET request to the backend API
-  const response = await fetch('http://localhost:5106/api/users')
+  const response = await fetch(
+    'http://localhost:5106/api/users',
+    {
+      headers: getAuthHeader(),
+    },
+  ) 
 
   // Only update the user list if the request was successful
   if (response.ok) {
@@ -34,9 +39,10 @@ async function createUser() {
   const response = await fetch('http://localhost:5106/api/users', {
     method: 'POST',
 
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  headers: {
+    ...getAuthHeader(),
+    'Content-Type': 'application/json',
+  },
 
     // Convert the JavaScript object into JSON before sending it
     body: JSON.stringify({
@@ -66,6 +72,7 @@ async function deleteUser(id) {
     `http://localhost:5106/api/users/${id}`,
     {
       method: 'DELETE',
+      headers: getAuthHeader(),
     },
   )
 
@@ -95,10 +102,11 @@ async function updateUser(id) {
     `http://localhost:5106/api/users/${id}`,
     {
       method: 'PUT',
-
-      headers: {
-        'Content-Type': 'application/json',
-      },
+   
+    headers: {
+      ...getAuthHeader(),
+      'Content-Type': 'application/json',
+    },
 
       // Convert the updated user data into JSON before sending it
       body: JSON.stringify({

@@ -13,10 +13,22 @@ const editingCategoryId = ref(null)
 const editName = ref('')
 const editDescription = ref('')
 
+// Basic Authentication header
+function getAuthHeader() {
+  const auth = localStorage.getItem('taxoraAuth')
+
+  return {
+    Authorization: `Basic ${auth}`,
+  }
+}
+
 // Load all tax categories
 async function loadTaxCategories() {
   const response = await fetch(
     'http://localhost:5106/api/taxcategories',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
   if (response.ok) {
@@ -37,6 +49,7 @@ async function createTaxCategory() {
       method: 'POST',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -74,6 +87,7 @@ async function updateTaxCategory(id) {
       method: 'PUT',
 
       headers: {
+        ...getAuthHeader(),
         'Content-Type': 'application/json',
       },
 
@@ -105,6 +119,7 @@ async function deleteTaxCategory(id) {
     `http://localhost:5106/api/taxcategories/${id}`,
     {
       method: 'DELETE',
+      headers: getAuthHeader(),
     },
   )
 

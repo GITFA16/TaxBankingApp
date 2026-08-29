@@ -12,7 +12,7 @@ async function login() {
   errorMessage.value = ''
 
   const credentials = btoa(
-    `${username.value}:${password.value}`
+    `${username.value}:${password.value}`  //YWRtaW46YWRtaW4=
   )
 
   const response = await fetch(

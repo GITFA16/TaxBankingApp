@@ -14,11 +14,18 @@ const taxSummary = ref({})
 const loading = ref(false)
 
 
+// BASIC AUTH HEADER
+function getAuthHeader() {
+  const auth = localStorage.getItem('taxoraAuth')
+
+  return {
+    Authorization: `Basic ${auth}`,
+  }
+}
+
+
 // USER OPTIONS
 // Creates a Full Name for every user
-// Example:
-// id: 1
-// fullName: Faizal Alamudi
 const userOptions = computed(() => {
   return users.value.map(user => ({
     id: user.id,
@@ -29,12 +36,13 @@ const userOptions = computed(() => {
 
 // LOAD ALL USERS
 async function loadUsers() {
-  // Frontend sends a GET request to load all users
   const response = await fetch(
     'http://localhost:5106/api/users',
+    {
+      headers: getAuthHeader(),
+    },
   )
 
-  // Store users if the request was successful
   if (response.ok) {
     users.value = await response.json()
   }
@@ -43,31 +51,28 @@ async function loadUsers() {
 
 // LOAD TAX SUMMARY
 async function loadTaxSummary() {
-  // Do nothing if no user was selected
   if (selectedUserId.value === null) {
     return
   }
 
-  // Show loading animation
   loading.value = true
 
-  // Frontend sends a GET request for the selected user
   const response = await fetch(
     `http://localhost:5106/api/users/${selectedUserId.value}/tax-summary`,
+    {
+      headers: getAuthHeader(),
+    },
   )
 
-  // Store the tax summary returned by the backend
   if (response.ok) {
     taxSummary.value = await response.json()
   }
 
-  // Stop loading animation
   loading.value = false
 }
 
 
 // VUE LIFECYCLE
-// Load all users when this page is opened
 onMounted(() => {
   loadUsers()
 })
