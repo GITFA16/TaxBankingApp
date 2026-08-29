@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 using TaxBankingApi.Models;
 using TaxBankingApi.Data;
 
@@ -25,13 +26,14 @@ public class TransactionsController : ControllerBase
     }
 
 
-    // READ ONE TRANSACTION BY ID
+    // READ ONE TRANSACTION
     // GET /api/transactions/{id}
     [HttpGet("{id}")]
     public ActionResult<Transaction> GetTransactionById(int id)
     {
         var transaction = _context.Transactions
-            .FirstOrDefault(transaction => transaction.Id == id);
+            .FirstOrDefault(transaction =>
+                transaction.Id == id);
 
         if (transaction == null)
         {
@@ -45,8 +47,8 @@ public class TransactionsController : ControllerBase
     // READ TRANSACTIONS FOR ONE BANK ACCOUNT
     // GET /api/bankaccounts/{bankAccountId}/transactions
     [HttpGet("/api/bankaccounts/{bankAccountId}/transactions")]
-    public ActionResult<IEnumerable<Transaction>> GetTransactionsByBankAccount(
-        int bankAccountId)
+    public ActionResult<IEnumerable<Transaction>>
+        GetTransactionsByBankAccount(int bankAccountId)
     {
         var accountTransactions = _context.Transactions
             .Where(transaction =>
@@ -72,14 +74,10 @@ public class TransactionsController : ControllerBase
             return NotFound("Bank account not found.");
         }
 
-        // If no tax category was selected,
-        // use Uncategorized as default
-        if (string.IsNullOrWhiteSpace(
-            newTransaction.SuggestedTaxCategory))
-        {
-            newTransaction.SuggestedTaxCategory =
-                "Uncategorized";
-        }
+        // Automatically determine the tax category
+        // from the Tax Categories stored in the database
+        newTransaction.SuggestedTaxCategory =
+            FindTaxCategory(newTransaction.Description);
 
         _context.Transactions.Add(newTransaction);
 
@@ -121,11 +119,11 @@ public class TransactionsController : ControllerBase
     }
 
 
-    // READ ONLY TAX-RELEVANT TRANSACTIONS
+    // READ TAX-RELEVANT TRANSACTIONS
     // GET /api/bankaccounts/{bankAccountId}/tax-transactions
     [HttpGet("/api/bankaccounts/{bankAccountId}/tax-transactions")]
-    public ActionResult<IEnumerable<Transaction>> GetTaxTransactions(
-        int bankAccountId)
+    public ActionResult<IEnumerable<Transaction>>
+        GetTaxTransactions(int bankAccountId)
     {
         var taxTransactions = _context.Transactions
             .Where(transaction =>
@@ -181,11 +179,10 @@ public class TransactionsController : ControllerBase
         transaction.Currency =
             updatedTransaction.Currency;
 
+        // Recalculate the category automatically
+        // when the transaction is updated
         transaction.SuggestedTaxCategory =
-            string.IsNullOrWhiteSpace(
-                updatedTransaction.SuggestedTaxCategory)
-            ? "Uncategorized"
-            : updatedTransaction.SuggestedTaxCategory;
+            FindTaxCategory(transaction.Description);
 
         _context.SaveChanges();
 
@@ -212,5 +209,91 @@ public class TransactionsController : ControllerBase
         _context.SaveChanges();
 
         return NoContent();
+    }
+
+
+    // FIND TAX CATEGORY FROM DATABASE
+    private string FindTaxCategory(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            return "Uncategorized";
+        }
+
+        // Convert the transaction description to lowercase.
+        // This makes the comparison case-insensitive.
+        var transactionText =
+            description.ToLower();
+
+        // Read all Tax Categories from the database
+        var categories =
+            _context.TaxCategories.ToList();
+
+        foreach (var category in categories)
+        {
+            // First check the category name itself.
+            //
+            // Example:
+            // Category Name:
+            // Krankenkasse
+            //
+            // Transaction:
+            // KRANKENKASSE Rechnung
+            if (!string.IsNullOrWhiteSpace(
+                category.Name))
+            {
+                var categoryName =
+                    category.Name.ToLower();
+
+                if (transactionText.Contains(
+                    categoryName))
+                {
+                    return category.Name;
+                }
+            }
+
+
+            // Then check the words stored
+            // in the Tax Category Description.
+            //
+            // Regex allows the user to separate
+            // keywords with spaces or punctuation.
+            //
+            // Example:
+            // Health Insurance / Krankenkasse - Sick,
+            // SWICA; CSS Helsana
+            //
+            // becomes:
+            // health
+            // insurance
+            // krankenkasse
+            // sick
+            // swica
+            // css
+            // helsana
+            if (!string.IsNullOrWhiteSpace(
+                category.Description))
+            {
+                var keywords = Regex.Split(
+                    category.Description.ToLower(),
+                    @"\W+"
+                )
+                .Where(keyword =>
+                    !string.IsNullOrWhiteSpace(keyword))
+                .ToList();
+
+
+                foreach (var keyword in keywords)
+                {
+                    if (transactionText.Contains(
+                        keyword))
+                    {
+                        return category.Name;
+                    }
+                }
+            }
+        }
+
+        return "Uncategorized";
     }
 }

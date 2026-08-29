@@ -1,73 +1,109 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 
-// Reactive variable that stores the list of users
+// Stores all users
 const users = ref([])
 
-// Reactive variables for the Create User form
+// Create User form
 const firstName = ref('')
 const lastName = ref('')
 const email = ref('')
 
-// Reactive variables for the Edit User form
+// Edit User form
 const editingUserId = ref(null)
 const editFirstName = ref('')
 const editLastName = ref('')
 const editEmail = ref('')
 
+// Error message
+const errorMessage = ref('')
+
+// Basic Authentication header
+function getAuthHeader() {
+  const auth = localStorage.getItem('taxoraAuth')
+
+  return {
+    Authorization: `Basic ${auth}`,
+  }
+}
+
 
 // READ USERS
 async function loadUsers() {
-  // Frontend sends a GET request to the backend API
-  const response = await fetch(
-    'https://localhost:7131/api/users',
-    {
-      headers: getAuthHeader(),
-    },
-  ) 
+  errorMessage.value = ''
 
-  // Only update the user list if the request was successful
-  if (response.ok) {
-    users.value = await response.json()
+  try {
+    const response = await fetch(
+      'https://localhost:7131/api/users',
+      {
+        headers: getAuthHeader(),
+      },
+    )
+
+    if (response.ok) {
+      users.value = await response.json()
+    } else {
+      errorMessage.value = 'Users could not be loaded.'
+    }
+  } catch (error) {
+    errorMessage.value = 'Backend connection failed.'
   }
 }
 
 
 // CREATE USER
 async function createUser() {
-  // Frontend sends a POST request to create a new user
-  const response = await fetch('https://localhost:7131/api/users', {
-    method: 'POST',
+  errorMessage.value = ''
 
-  headers: {
-    ...getAuthHeader(),
-    'Content-Type': 'application/json',
-  },
+  if (firstName.value.trim() === '') {
+    errorMessage.value = 'Please enter a First Name.'
+    return
+  }
 
-    // Convert the JavaScript object into JSON before sending it
-    body: JSON.stringify({
-      firstName: firstName.value,
-      lastName: lastName.value,
-      email: email.value,
-    }),
-  })
+  if (lastName.value.trim() === '') {
+    errorMessage.value = 'Please enter a Last Name.'
+    return
+  }
 
-  // Continue only if the user was created successfully
+  if (email.value.trim() === '') {
+    errorMessage.value = 'Please enter an Email.'
+    return
+  }
+
+  const response = await fetch(
+    'https://localhost:7131/api/users',
+    {
+      method: 'POST',
+
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: email.value,
+      }),
+    },
+  )
+
   if (response.ok) {
-    // Clear the Create User form
     firstName.value = ''
     lastName.value = ''
     email.value = ''
 
-    // Load the users again so the new user appears immediately
     await loadUsers()
+  } else {
+    errorMessage.value = 'User could not be created.'
   }
 }
 
 
 // DELETE USER
 async function deleteUser(id) {
-  // Frontend sends a DELETE request using the selected user ID
+  errorMessage.value = ''
+
   const response = await fetch(
     `https://localhost:7131/api/users/${id}`,
     {
@@ -76,19 +112,18 @@ async function deleteUser(id) {
     },
   )
 
-  // Reload the users so the deleted user disappears immediately
   if (response.ok) {
     await loadUsers()
+  } else {
+    errorMessage.value = 'User could not be deleted.'
   }
 }
 
 
 // START EDIT USER
 function startEdit(user) {
-  // Store the ID of the user that is currently being edited
   editingUserId.value = user.id
 
-  // Copy the current user data into the Edit User form
   editFirstName.value = user.firstName
   editLastName.value = user.lastName
   editEmail.value = user.email
@@ -97,18 +132,33 @@ function startEdit(user) {
 
 // UPDATE USER
 async function updateUser(id) {
-  // Frontend sends a PUT request using the selected user ID
+  errorMessage.value = ''
+
+  if (editFirstName.value.trim() === '') {
+    errorMessage.value = 'Please enter a First Name.'
+    return
+  }
+
+  if (editLastName.value.trim() === '') {
+    errorMessage.value = 'Please enter a Last Name.'
+    return
+  }
+
+  if (editEmail.value.trim() === '') {
+    errorMessage.value = 'Please enter an Email.'
+    return
+  }
+
   const response = await fetch(
     `https://localhost:7131/api/users/${id}`,
     {
       method: 'PUT',
-   
-    headers: {
-      ...getAuthHeader(),
-      'Content-Type': 'application/json',
-    },
 
-      // Convert the updated user data into JSON before sending it
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+
       body: JSON.stringify({
         firstName: editFirstName.value,
         lastName: editLastName.value,
@@ -117,27 +167,23 @@ async function updateUser(id) {
     },
   )
 
-  // Continue only if the update was successful
   if (response.ok) {
-    // Close Edit mode
     editingUserId.value = null
 
-    // Load the users again so the updated data appears immediately
     await loadUsers()
+  } else {
+    errorMessage.value = 'User could not be updated.'
   }
 }
 
 
 // CANCEL EDIT
 function cancelEdit() {
-  // Set editingUserId back to null
-  // null means that no user is currently being edited
   editingUserId.value = null
 }
 
 
-// VUE LIFECYCLE
-// Load all users automatically when this Vue component is mounted
+// Load users when page opens
 onMounted(() => {
   loadUsers()
 })
@@ -148,6 +194,15 @@ onMounted(() => {
   <v-container>
     <h1>Users</h1>
 
+    <!-- Error Message -->
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      class="mb-4"
+    >
+      {{ errorMessage }}
+    </v-alert>
+
 
     <!-- CREATE USER FORM -->
     <v-card class="mb-6">
@@ -156,28 +211,29 @@ onMounted(() => {
       </v-card-title>
 
       <v-card-text>
-        <!-- First Name input -->
+
+        <!-- First Name -->
         <v-text-field
           v-model="firstName"
           label="First Name"
         />
 
-        <!-- Last Name input -->
+        <!-- Last Name -->
         <v-text-field
           v-model="lastName"
           label="Last Name"
         />
 
-        <!-- Email input -->
+        <!-- Email -->
         <v-text-field
           v-model="email"
           label="Email"
           type="email"
         />
+
       </v-card-text>
 
       <v-card-actions>
-        <!-- Calls createUser() when the button is clicked -->
         <v-btn
           color="primary"
           @click="createUser"
@@ -188,8 +244,7 @@ onMounted(() => {
     </v-card>
 
 
-    <!-- READ / DISPLAY USERS -->
-    <!-- Create one card for every user in the users list -->
+    <!-- USER LIST -->
     <v-card
       v-for="user in users"
       :key="user.id"
@@ -197,18 +252,26 @@ onMounted(() => {
     >
 
       <!-- NORMAL VIEW -->
-      <!-- Show this section when the user is not being edited -->
       <template v-if="editingUserId !== user.id">
+
         <v-card-title>
           {{ user.firstName }} {{ user.lastName }}
         </v-card-title>
 
         <v-card-text>
-          {{ user.email }}
+          <div>
+            User ID:
+            {{ user.id }}
+          </div>
+
+          <div>
+            Email:
+            {{ user.email }}
+          </div>
         </v-card-text>
 
         <v-card-actions>
-          <!-- Start Edit mode for this user -->
+
           <v-btn
             color="primary"
             @click="startEdit(user)"
@@ -216,25 +279,27 @@ onMounted(() => {
             Edit
           </v-btn>
 
-          <!-- Delete this user using user.id -->
           <v-btn
             color="error"
             @click="deleteUser(user.id)"
           >
             Delete
           </v-btn>
+
         </v-card-actions>
+
       </template>
 
 
       <!-- EDIT VIEW -->
-      <!-- Show this section when the selected user is being edited -->
       <template v-else>
+
         <v-card-title>
           Edit User
         </v-card-title>
 
         <v-card-text>
+
           <!-- Edit First Name -->
           <v-text-field
             v-model="editFirstName"
@@ -253,10 +318,11 @@ onMounted(() => {
             label="Email"
             type="email"
           />
+
         </v-card-text>
 
         <v-card-actions>
-          <!-- Save the updated user data -->
+
           <v-btn
             color="primary"
             @click="updateUser(user.id)"
@@ -264,15 +330,17 @@ onMounted(() => {
             Save
           </v-btn>
 
-          <!-- Cancel Edit mode without saving -->
           <v-btn
             @click="cancelEdit"
           >
             Cancel
           </v-btn>
+
         </v-card-actions>
+
       </template>
 
     </v-card>
+
   </v-container>
 </template>

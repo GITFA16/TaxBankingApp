@@ -1,10 +1,24 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using TaxBankingApi.Authentication;
 using TaxBankingApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+// Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/taxora-.log",
+        rollingInterval: RollingInterval.Day
+    )
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 
 // Database
@@ -60,6 +74,10 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+
+
+// HTTP request logging
+app.UseSerilogRequestLogging();
 
 
 // Allow frontend
