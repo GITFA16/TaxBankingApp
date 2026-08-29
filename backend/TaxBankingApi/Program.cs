@@ -1,31 +1,52 @@
-using Microsoft.EntityFrameworkCore; //EF c# to database mapping
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using TaxBankingApi.Authentication;
 using TaxBankingApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-// Add services to the container.
 
+
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite( //AppDbContext akan menggunakan SQLite.
+    options.UseSqlite(
         builder.Configuration.GetConnectionString("DefaultConnection")
-        //get connection string named DefaultConnection from appsettings.json.
     )
 );
-//AppDbContext to ASP.NET Dependency Injection.
 
+
+// Controllers
 builder.Services.AddControllers();
 
-// builder.Services.AddOpenApi();
 
-// Add code block to enable Swagger UI
+// Basic Authentication
+builder.Services
+    .AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(
+        "BasicAuthentication",
+        null
+    );
+
+
+// Require authentication for all controllers
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+
+// Swagger
 builder.Services.AddOpenApiDocument(options =>
 {
     options.DocumentName = "v1";
     options.Title = "Tax Banking API";
     options.Version = "v1";
-}
-);
-//connecting with frontend localhost 5173
+});
+
+
+// CORS for Vue frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -40,27 +61,37 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+
+// Allow frontend
 app.UseCors("AllowFrontend");
 
-// Configure the HTTP request pipeline.
+
+// Swagger
 if (app.Environment.IsDevelopment())
 {
-    // app.MapOpenApi(); 
-    //add swagger
     app.UseOpenApi(options =>
         options.Path = "/swagger/{documentName}/swagger.json");
 
     app.UseSwaggerUi(options =>
     {
         options.Path = "/swagger";
-        options.DocumentPath = "/swagger/{documentName}/swagger.json";
+        options.DocumentPath =
+            "/swagger/{documentName}/swagger.json";
     });
 }
 
+
+// HTTPS redirect
 app.UseHttpsRedirection();
+
+
+// Authentication must be before Authorization
+app.UseAuthentication();
 
 app.UseAuthorization();
 
+
+// API Controllers
 app.MapControllers();
 
 app.Run();
