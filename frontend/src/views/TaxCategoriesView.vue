@@ -25,7 +25,7 @@ function getAuthHeader() {
 // Load all tax categories
 async function loadTaxCategories() {
   const response = await fetch(
-    'http://localhost:5106/api/taxcategories',
+    'https://localhost:5106/api/taxcategories',
     {
       headers: getAuthHeader(),
     },
@@ -44,7 +44,7 @@ async function createTaxCategory() {
   }
 
   const response = await fetch(
-    'http://localhost:5106/api/taxcategories',
+    'https://localhost:5106/api/taxcategories',
     {
       method: 'POST',
 
@@ -82,7 +82,7 @@ function startEdit(category) {
 // Update an existing tax category
 async function updateTaxCategory(id) {
   const response = await fetch(
-    `http://localhost:5106/api/taxcategories/${id}`,
+    `https://localhost:5106/api/taxcategories/${id}`,
     {
       method: 'PUT',
 
@@ -116,7 +116,7 @@ function cancelEdit() {
 // Delete a tax category
 async function deleteTaxCategory(id) {
   const response = await fetch(
-    `http://localhost:5106/api/taxcategories/${id}`,
+    `https://localhost:5106/api/taxcategories/${id}`,
     {
       method: 'DELETE',
       headers: getAuthHeader(),

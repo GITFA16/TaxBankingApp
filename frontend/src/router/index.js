@@ -49,10 +49,30 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
     },
-    
   ],
 })
+
+
+// Route Protection
+router.beforeEach((to) => {
+  const isLoggedIn =
+    localStorage.getItem('taxoraAuth') !== null
+
+  // Login page can always be opened
+  if (to.path === '/login') {
+    return true
+  }
+
+  // If not logged in, go to Login page
+  if (!isLoggedIn) {
+    return '/login'
+  }
+
+  // User is logged in
+  return true
+})
+
 
 export default router

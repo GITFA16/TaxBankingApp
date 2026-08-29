@@ -245,7 +245,7 @@ function cancelEdit() {
 // Delete a transaction
 async function deleteTransaction(id) {
   const response = await fetch(
-    `http://localhost:5106/api/transactions/${id}`,
+    `https://localhost:5106/api/transactions/${id}`,
     {
       method: 'DELETE',
       headers: getAuthHeader(),

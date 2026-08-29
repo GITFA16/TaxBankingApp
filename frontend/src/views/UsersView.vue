@@ -20,7 +20,7 @@ const editEmail = ref('')
 async function loadUsers() {
   // Frontend sends a GET request to the backend API
   const response = await fetch(
-    'http://localhost:5106/api/users',
+    'https://localhost:5106/api/users',
     {
       headers: getAuthHeader(),
     },
@@ -36,7 +36,7 @@ async function loadUsers() {
 // CREATE USER
 async function createUser() {
   // Frontend sends a POST request to create a new user
-  const response = await fetch('http://localhost:5106/api/users', {
+  const response = await fetch('https://localhost:5106/api/users', {
     method: 'POST',
 
   headers: {
@@ -69,7 +69,7 @@ async function createUser() {
 async function deleteUser(id) {
   // Frontend sends a DELETE request using the selected user ID
   const response = await fetch(
-    `http://localhost:5106/api/users/${id}`,
+    `https://localhost:5106/api/users/${id}`,
     {
       method: 'DELETE',
       headers: getAuthHeader(),
@@ -99,7 +99,7 @@ function startEdit(user) {
 async function updateUser(id) {
   // Frontend sends a PUT request using the selected user ID
   const response = await fetch(
-    `http://localhost:5106/api/users/${id}`,
+    `https://localhost:5106/api/users/${id}`,
     {
       method: 'PUT',
    
