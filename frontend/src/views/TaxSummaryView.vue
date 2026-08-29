@@ -37,7 +37,7 @@ const userOptions = computed(() => {
 // LOAD ALL USERS
 async function loadUsers() {
   const response = await fetch(
-    'https://localhost:5106/api/users',
+    'https://localhost:7131/api/users',
     {
       headers: getAuthHeader(),
     },
@@ -58,7 +58,7 @@ async function loadTaxSummary() {
   loading.value = true
 
   const response = await fetch(
-    `https://localhost:5106/api/users/${selectedUserId.value}/tax-summary`,
+    `https://localhost:7131/api/users/${selectedUserId.value}/tax-summary`,
     {
       headers: getAuthHeader(),
     },

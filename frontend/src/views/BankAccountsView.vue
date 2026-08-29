@@ -55,7 +55,7 @@ const userOptions = computed(() => {
 // READ ALL USERS
 async function loadUsers() {
   const response = await fetch(
-    'https://localhost:5106/api/users',
+    'https://localhost:7131/api/users',
     {
       headers: getAuthHeader(),
     },
@@ -81,7 +81,7 @@ function getUserFullName(userId) {
 // READ ALL BANK ACCOUNTS
 async function loadBankAccounts() {
   const response = await fetch(
-    'https://localhost:5106/api/bankaccounts',
+    'https://localhost:7131/api/bankaccounts',
     {
       headers: getAuthHeader(),
     },
@@ -100,7 +100,7 @@ async function loadBankAccountsByUser() {
   }
 
   const response = await fetch(
-    `https://localhost:5106/api/users/${selectedUserId.value}/accounts`,
+    `https://localhost:7131/api/users/${selectedUserId.value}/accounts`,
     {
       headers: getAuthHeader(),
     },
@@ -119,7 +119,7 @@ async function createBankAccount() {
   }
 
   const response = await fetch(
-    `https://localhost:5106/api/users/${userId.value}/accounts`,
+    `https://localhost:7131/api/users/${userId.value}/accounts`,
     {
       method: 'POST',
 
@@ -163,7 +163,7 @@ function startEdit(account) {
 // UPDATE BANK ACCOUNT
 async function updateBankAccount(id) {
   const response = await fetch(
-    `https://localhost:5106/api/bankaccounts/${id}`,
+    `https://localhost:7131/api/bankaccounts/${id}`,
     {
       method: 'PUT',
 
@@ -202,7 +202,7 @@ function cancelEdit() {
 // DELETE BANK ACCOUNT
 async function deleteBankAccount(id) {
   const response = await fetch(
-    `https://localhost:5106/api/bankaccounts/${id}`,
+    `https://localhost:7131/api/bankaccounts/${id}`,
     {
       method: 'DELETE',
       headers: getAuthHeader(),

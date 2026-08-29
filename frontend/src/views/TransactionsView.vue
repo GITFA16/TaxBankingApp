@@ -71,7 +71,7 @@ const bankAccountOptions = computed(() => {
 // Load all transactions
 async function loadTransactions() {
   const response = await fetch(
-    'http://localhost:5106/api/transactions',
+    'http://localhost:7131/api/transactions',
     {
       headers: getAuthHeader(),
     },
@@ -85,7 +85,7 @@ async function loadTransactions() {
 // Load all bank accounts
 async function loadBankAccounts() {
   const response = await fetch(
-    'http://localhost:5106/api/bankaccounts',
+    'http://localhost:7131/api/bankaccounts',
     {
       headers: getAuthHeader(),
     },
@@ -99,7 +99,7 @@ async function loadBankAccounts() {
 // Load all users
 async function loadUsers() {
   const response = await fetch(
-    'http://localhost:5106/api/users',
+    'http://localhost:7131/api/users',
     {
       headers: getAuthHeader(),
     },
@@ -117,7 +117,7 @@ async function loadTransactionsByBankAccount() {
   }
 
   const response = await fetch(
-    `http://localhost:5106/api/bankaccounts/${selectedBankAccountId.value}/transactions`,
+    `http://localhost:7131/api/bankaccounts/${selectedBankAccountId.value}/transactions`,
     {
       headers: getAuthHeader(),
     },
@@ -155,7 +155,7 @@ async function createTransaction() {
   }
 
   const response = await fetch(
-    'http://localhost:5106/api/transactions',
+    'http://localhost:7131/api/transactions',
     {
       method: 'POST',
 
@@ -207,7 +207,7 @@ function startEdit(transaction) {
 // Update an existing transaction
 async function updateTransaction(id) {
   const response = await fetch(
-    `http://localhost:5106/api/transactions/${id}`,
+    `http://localhost:7131/api/transactions/${id}`,
     {
       method: 'PUT',
 
@@ -245,7 +245,7 @@ function cancelEdit() {
 // Delete a transaction
 async function deleteTransaction(id) {
   const response = await fetch(
-    `https://localhost:5106/api/transactions/${id}`,
+    `https://localhost:7131/api/transactions/${id}`,
     {
       method: 'DELETE',
       headers: getAuthHeader(),

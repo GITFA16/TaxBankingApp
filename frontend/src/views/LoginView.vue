@@ -16,7 +16,7 @@ async function login() {
   )
 
   const response = await fetch(
-    'https://localhost:5106/api/users',
+    'https://localhost:7131/api/users',
     {
       headers: {
         Authorization: `Basic ${credentials}`
